@@ -1,97 +1,39 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Калькулятор</title    <style>
-        body {
- font-family: Arial, sans;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            background-color: #f4f4f4;
-        }
-        #calculator {
-            border: 1px solid #ccc;
-            border-radius: 10px;
-            padding: 20px;
-            background: white;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-        }
-        #display {
-            width: 100%;
-            height: 40px;
-            text-align: right;
-            font-size: 24px;
-            margin-bottom: 20px;
-            padding: 5px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            box-sizing: border-box;
-        }
-        button {
-            width: 23%;
-            height: 40px;
-            font-size: 18px;
-            margin: 1%;
-            border: none;
-            border-radius: 5px;
-            background-color: #007BFF;
-            color: white;
-            cursor: pointer;
-            transition: background-color 0.3s;
-        }
-        button:hover {
-            background-color: #0056b3;
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>Tap Game</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;user-select:none}
+body{background:linear-gradient(135deg,#0f0c29,#302b63,#24243e);color:#fff;
+  font-family:sans-serif;min-height:100vh;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;text-align:center}
+h1{font-size:1.8rem;margin-bottom:6px;
+  background:linear-gradient(90deg,#00d4ff,#a855f7);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent}
+p{font-size:.85rem;opacity:.45;margin-bottom:40px}
+.btn{width:150px;height:150px;border-radius:50%;
+  background:radial-gradient(circle at 38% 32%,#a855f7,#4f46e5);border:none;
+  cursor:pointer;font-size:3rem;
+  box-shadow:0 0 60px #7c3aed44,0 10px 40px #00000055;transition:transform .1s}
+.btn:active{transform:scale(.88)}
+.score{font-size:5rem;font-weight:bold;margin-top:28px;
+  background:linear-gradient(90deg,#fff,#a5b4fc);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.lbl{font-size:.75rem;opacity:.4;letter-spacing:3px;text-transform:uppercase;margin-top:6px}
+</style>
 </head>
 <body>
-    <div id="calculator">
-        <input type="text" id="display" disabled>
-        <div>
-            <button onclick="clearDisplay()">C</button>
-            <button onclick="appendToDisplay('/')">/</button>
-            <button="appendToDisplay('*')">*</button>
-            <button onclick="appendToDisplay('-')">-</button>
-        </div>
-        <div>
-            <button onclick="appendToDisplay('7')">7</button>
-            <button onclick="appendToDisplay('8')">8</button>
-            <button onclick="appendToDisplay('9')">9</button>
-            <button onclick="appendTo('+')">+</button>
-        </div>
-        <div>
-            <button onclick="appendToDisplay('4')">4</button>
- <button onclick="appendToDisplay('5')">5</button>
-            <button onclick="appendDisplay('6')">6</>
-            <button onclick="Result()">=</button>
-        </div>
- <div>
-            <button onclick="appendToDisplay('1')">1</button>
-            <button onclick="appendToDisplay('2')">2</button>
-            <button onclick="appendToDisplay('3')">3</button>
-        </div>
-        <div>
-            <button onclick="appendToDisplay('0')"></button>
-        </div>
-    </div>
-    <script>
-        function appendToDisplay) {
-            document.getElementById('display').value += value;
-        }
-
-        function clearDisplay() {
-            document.getElementById('display').value = '';
-               function calculateResult() {
-            const display = document.getElementById('display');
-            try {
-                display.value = eval(display.value) || '';
-            } catch {
-                display.value = "Ошибка"
-            }
-        }
-    </script>
+<h1>Tap Master</h1>
+<p>Офлайн игра</p>
+<button class="btn" onclick="tap()">TAP</button>
+<div class="score" id="sc">0</div>
+<div class="lbl">очков</div>
+<script>
+  let n=+localStorage.getItem('score')||0;
+  document.getElementById('sc').textContent=n;
+  function tap(){n++;document.getElementById('sc').textContent=n;localStorage.setItem('score',n);if(navigator.vibrate)navigator.vibrate(15);}
+</script>
 </body>
 </html>

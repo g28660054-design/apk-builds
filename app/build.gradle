@@ -3,15 +3,26 @@ android {
     compileSdkVersion 33
     buildToolsVersion "33.0.2"
     defaultConfig {
-        applicationId "com.exam.d"
+        applicationId "com.clicker.app"
         minSdkVersion 23
         targetSdkVersion 33
         versionCode 1
-        versionName "1.0.09"
+        versionName "1.0.0"
+    }
+    signingConfigs {
+        release {
+            storeFile file("keystore.jks")
+            storePassword System.getenv("STORE_PASS") ?: "android123"
+            keyAlias System.getenv("KEY_ALIAS") ?: "mykey"
+            keyPassword System.getenv("KEY_PASS") ?: "android123"
+        }
     }
     buildTypes {
         debug { debuggable true }
-        release { minifyEnabled false }
+        release {
+            minifyEnabled false
+            signingConfig signingConfigs.release
+        }
     }
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8

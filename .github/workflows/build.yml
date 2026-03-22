@@ -22,12 +22,24 @@ jobs:
         run: |
           sdkmanager "platforms;android-33" "build-tools;33.0.2" --sdk_root=$ANDROID_HOME
           yes | sdkmanager --licenses --sdk_root=$ANDROID_HOME || true
-      - name: Build APK
-        run: gradle assembleDebug
+      - name: Generate Keystore (Release)
+        if: "true"
+        run: |
+          keytool -genkeypair -v -keystore app/keystore.jks \
+            -alias "mykey" -keyalg RSA -keysize 2048 -validity 10000 \
+            -storepass "android123" -keypass "android123" \
+            -dname "CN=APKBuilder, OU=Dev, O=APKBuilder, L=City, S=State, C=US"
         env:
           ANDROID_HOME: ${{ env.ANDROID_HOME }}
+      - name: Build APK
+        run: gradle assembleRelease
+        env:
+          ANDROID_HOME: ${{ env.ANDROID_HOME }}
+          STORE_PASS: "android123"
+          KEY_ALIAS: "mykey"
+          KEY_PASS: "android123"
       - uses: actions/upload-artifact@v4
         with:
           name: app-apk
-          path: app/build/outputs/apk/debug/*.apk
+          path: app/build/outputs/apk/release/*.apk
           retention-days: 7
