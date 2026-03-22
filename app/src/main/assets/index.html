@@ -3,115 +3,94 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Runner Game</title>
+    <title>Калькулятор</title>
     <style>
         body {
-            margin: 0;
-            overflow: hidden;
-            background: linear-gradient(135deg, #cce5ff, #99ccff);
+            font-family: Arial, sans-serif;
             display: flex;
             justify-content: center;
             align-items: center;
             height: 100vh;
-            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
         }
-        canvas {
-            border: 1px solid #000;
+        #calculator {
             background: #fff;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
-        }
-        #startScreen {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            text-align: center;
-            opacity: 0.8;
-            background: rgba(255, 255, 255, 0.7);
             padding: 20px;
             border-radius: 10px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            font-size: 24px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        button {
+            width: 23%;
+            padding: 15px;
+            margin: 1%;
+            font-size: 18px;
+            border: none;
+            border-radius: 5px;
+            background-color: #007bff;
+            color: white;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
         }
     </style>
 </head>
 <body>
-    <div id="startScreen">
-        <h1>Runner Game</h1>
-        <button id="startButton">Начать игру</button>
+    <div id="calculator">
+        <input type="text" id="result" readonly>
+        <div>
+            <button onclick="clearResult()">C</button>
+            <button onclick="appendToResult('/')">/</button>
+            <button onclick="appendToResult('*')">*</button>
+            <button onclick="appendToResult('-')">-</button>
+        </div>
+        <div>
+            <button onclick="appendToResult('7')">7</button>
+            <button onclick="appendToResult('8')">8</button>
+            <button onclick="appendToResult('9')">9</button>
+            <button onclick="appendToResult('+')">+</button>
+        </div>
+        <div>
+            <button onclick="appendToResult('4')">4</button>
+            <button onclick="appendToResult('5')">5</button>
+            <button onclick="appendToResult('6')">6</button>
+            <button onclick="calculateResult()">=</button>
+        </div>
+        <div>
+            <button onclick="appendToResult('1')">1</button>
+            <button onclick="appendToResult('2')">2</button>
+            <button onclick="appendToResult('3')">3</button>
+        </div>
+        <div>
+            <button onclick="appendToResult('0')">0</button>
+        </div>
     </div>
-    <canvas id="gameCanvas" width="800" height="400"></canvas>
-
-    <script>
-        const canvas = document.getElementById('gameCanvas');
-        const ctx = canvas.getContext('2d');
-        const gravity = 0.5;
-        const jumpStrength = 10;
-        let isJumping = false;
-        let jumpVelocity = 0;
-
-        let score = 0;
-        const scoreElement = document.createElement('div');
-        scoreElement.style.position = 'absolute';
-        scoreElement.style.top = '10px';
-        scoreElement.style.right = '20px';
-        scoreElement.style.fontSize = '20px';
-        scoreElement.innerHTML = 'Счет: ' + score;
-        document.body.appendChild(scoreElement);
-
-        const player = {
-            x: 50,
-            y: 200,
-            width: 40,
-            height: 40,
-            color: 'red',
-            update() {
-                if (this.y + this.height < canvas.height) {
-                    this.y += jumpVelocity;
-                    jumpVelocity += gravity;
-                } else {
-                    this.y = canvas.height - this.height;
-                    jumpVelocity = 0;
-                }
-            },
-            jump() {
-                if (this.y === canvas.height - this.height) {
-                    jumpVelocity = -jumpStrength;
-                    navigator.vibrate(100);
-                }
-            },
-            draw() {
-                ctx.fillStyle = this.color;
-                ctx.fillRect(this.x, this.y, this.width, this.height);
-            }
-        };
-
-        function resetGame() {
-            score = 0;
-            player.y = canvas.height - player.height;
-            jumpVelocity = 0;
-            scoreElement.innerHTML = 'Счет: ' + score;
-            localStorage.setItem('highScore', Math.max(score, localStorage.getItem('highScore') || 0));
+    <>
+        function appendToResult(value) {
+            document.getElementById('result').value += value;
         }
 
-        function draw() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            player.update();
-            player.draw();
-            scoreElement.innerHTML = 'Счет: ' + score++;
-            requestAnimationFrame(draw);
+ function clearResult() {
+            document.getElementById('result').value = '';
         }
 
-        document.getElementByIdstartButton').addEventListener('click', function() {
-           .getElementById('startScreen').style.display = 'none';
-            resetGame();
-            draw();
-        });
-
-        window.addEventListener('keydown', (event) => {
-            if (event.code === 'Space {
-                player.jump();
+        function calculateResult() {
+            try {
+                const result = eval(document.getElementById('result').value);
+                document.getById('result').value = result;
+            } catch (e) {
+                alert('Ошибка в выражении');
+                clearResult();
             }
-        });
+        }
     </script>
 </body>
 </html>
