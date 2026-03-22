@@ -1725,6 +1725,7 @@ ${perms}
     </base-config>
 </network-security-config>`);
   t('app/build.gradle',
+isRelease ?
 `plugins { id 'com.android.application' }
 android {
     compileSdkVersion 33
@@ -1739,9 +1740,9 @@ android {
     signingConfigs {
         release {
             storeFile file("keystore.jks")
-            storePassword System.getenv("STORE_PASS") ?: "${storePass||'android123'}"
-            keyAlias System.getenv("KEY_ALIAS") ?: "${keyAlias||'mykey'}"
-            keyPassword System.getenv("KEY_PASS") ?: "${keyPass||'android123'}"
+            storePassword "${storePass||'android123'}"
+            keyAlias "${keyAlias||'mykey'}"
+            keyPassword "${keyPass||'android123'}"
         }
     }
     buildTypes {
@@ -1757,11 +1758,52 @@ android {
     }
 }
 dependencies {}
+`
+:
+`plugins { id 'com.android.application' }
+android {
+    compileSdkVersion 33
+    buildToolsVersion "33.0.2"
+    defaultConfig {
+        applicationId "${pkg}"
+        minSdkVersion ${minSdk}
+        targetSdkVersion 33
+        versionCode ${verCode}
+        versionName "${verName}"
+    }
+    buildTypes {
+        debug { debuggable true }
+        release { minifyEnabled false }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+}
+dependencies {}
 `);
   t('build.gradle',`buildscript {\n    repositories { google(); mavenCentral() }\n    dependencies { classpath 'com.android.tools.build:gradle:7.4.2' }\n}\nallprojects {\n    repositories { google(); mavenCentral() }\n}\n`);
   t('settings.gradle',`rootProject.name = "${appName}"\ninclude ':app'\n`);
   t('app/proguard-rules.pro','# ProGuard\n');
   t('gradle/wrapper/gradle-wrapper.properties',`distributionBase=GRADLE_USER_HOME\ndistributionPath=wrapper/dists\ndistributionUrl=https\\://services.gradle.org/distributions/gradle-7.6.4-bin.zip\nzipStoreBase=GRADLE_USER_HOME\nzipStorePath=wrapper/dists\n`);
+
+  const wfKeystoreStep = isRelease ? `      - name: Generate Keystore
+        run: |
+          keytool -genkeypair -noprompt \\
+            -keystore app/keystore.jks \\
+            -alias "${keyAlias||'mykey'}" \\
+            -keyalg RSA -keysize 2048 -validity 10000 \\
+            -storepass "${storePass||'android123'}" \\
+            -keypass "${keyPass||'android123'}" \\
+            -dname "CN=APKBuilder,OU=Dev,O=APKBuilder,L=City,S=State,C=US"
+          echo ""
+          echo "=========================================="
+          echo "KEYSTORE BASE64 (сохрани для обновлений):"
+          echo "=========================================="
+          base64 -w 0 app/keystore.jks
+          echo ""
+          echo "=========================================="\n` : '';
+
   t('.github/workflows/build.yml',
 `name: Build APK
 on:
@@ -1771,6 +1813,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
@@ -1787,33 +1831,10 @@ jobs:
         run: |
           sdkmanager "platforms;android-33" "build-tools;33.0.2" --sdk_root=\$ANDROID_HOME
           yes | sdkmanager --licenses --sdk_root=\$ANDROID_HOME || true
-${isRelease?`      - name: Setup Keystore
-        run: |
-          if [ -n "\${{ secrets.KEYSTORE_B64 }}" ]; then
-            echo "Using saved keystore from GitHub Secrets"
-            echo "\${{ secrets.KEYSTORE_B64 }}" | base64 -d > app/keystore.jks
-          else
-            echo "Generating new keystore..."
-            keytool -genkeypair -v -keystore app/keystore.jks \\\\
-              -alias "${keyAlias||'mykey'}" -keyalg RSA -keysize 2048 -validity 10000 \\\\
-              -storepass "${storePass||'android123'}" -keypass "${keyPass||'android123'}" \\\\
-              -dname "CN=APKBuilder, OU=Dev, O=APKBuilder, L=City, S=State, C=US"
-            KEYSTORE_B64=\$(base64 -w 0 app/keystore.jks)
-            curl -s -X PUT "https://api.github.com/repos/\${{ github.repository }}/actions/secrets/KEYSTORE_B64" \\\\
-              -H "Authorization: Bearer \${{ secrets.GITHUB_TOKEN }}" \\\\
-              -H "Content-Type: application/json" \\\\
-              -d "{\\"encrypted_value\\":\\"\${KEYSTORE_B64}\\"}" || true
-            echo "Note: Save KEYSTORE_B64 value to GitHub Secrets for future builds"
-          fi
-        env:
-          ANDROID_HOME: \${{ env.ANDROID_HOME }}
-`:''}      - name: Build APK
+${wfKeystoreStep}      - name: Build APK
         run: gradle ${isRelease?'assembleRelease':'assembleDebug'}
         env:
           ANDROID_HOME: \${{ env.ANDROID_HOME }}
-          STORE_PASS: "${storePass||'android123'}"
-          KEY_ALIAS: "${keyAlias||'mykey'}"
-          KEY_PASS: "${keyPass||'android123'}"
       - uses: actions/upload-artifact@v4
         with:
           name: app-apk

@@ -3,7 +3,7 @@ android {
     compileSdkVersion 33
     buildToolsVersion "33.0.2"
     defaultConfig {
-        applicationId "com.APKBuilder.build"
+        applicationId "com.apkbuilder.build"
         minSdkVersion 23
         targetSdkVersion 33
         versionCode 1
@@ -12,9 +12,9 @@ android {
     signingConfigs {
         release {
             storeFile file("keystore.jks")
-            storePassword System.getenv("STORE_PASS") ?: "android123"
-            keyAlias System.getenv("KEY_ALIAS") ?: "mykey"
-            keyPassword System.getenv("KEY_PASS") ?: "android123"
+            storePassword "android123"
+            keyAlias "mykey"
+            keyPassword "android123"
         }
     }
     buildTypes {
