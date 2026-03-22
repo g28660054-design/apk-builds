@@ -22,13 +22,24 @@ jobs:
         run: |
           sdkmanager "platforms;android-33" "build-tools;33.0.2" --sdk_root=$ANDROID_HOME
           yes | sdkmanager --licenses --sdk_root=$ANDROID_HOME || true
-      - name: Generate Keystore (Release)
-        if: "true"
+      - name: Setup Keystore
         run: |
-          keytool -genkeypair -v -keystore app/keystore.jks \
-            -alias "mykey" -keyalg RSA -keysize 2048 -validity 10000 \
-            -storepass "android123" -keypass "android123" \
-            -dname "CN=APKBuilder, OU=Dev, O=APKBuilder, L=City, S=State, C=US"
+          if [ -n "${{ secrets.KEYSTORE_B64 }}" ]; then
+            echo "Using saved keystore from GitHub Secrets"
+            echo "${{ secrets.KEYSTORE_B64 }}" | base64 -d > app/keystore.jks
+          else
+            echo "Generating new keystore..."
+            keytool -genkeypair -v -keystore app/keystore.jks \\
+              -alias "mykey" -keyalg RSA -keysize 2048 -validity 10000 \\
+              -storepass "android123" -keypass "android123" \\
+              -dname "CN=APKBuilder, OU=Dev, O=APKBuilder, L=City, S=State, C=US"
+            KEYSTORE_B64=$(base64 -w 0 app/keystore.jks)
+            curl -s -X PUT "https://api.github.com/repos/${{ github.repository }}/actions/secrets/KEYSTORE_B64" \\
+              -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \\
+              -H "Content-Type: application/json" \\
+              -d "{\"encrypted_value\":\"${KEYSTORE_B64}\"}" || true
+            echo "Note: Save KEYSTORE_B64 value to GitHub Secrets for future builds"
+          fi
         env:
           ANDROID_HOME: ${{ env.ANDROID_HOME }}
       - name: Build APK
