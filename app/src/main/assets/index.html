@@ -2,81 +2,95 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
-    <title>Tap Game</title>
-    <style        * {
-            box-sizing: border-box;
-            margin:0;
-            padding: 0            -webkit-tap-highlight-color: transparent;
-            user-select none;
-        }
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Калькулятор</title    <style>
         body {
- background: linear-gradient(135deg, #0f0c29, #302b, #24243e);
-           : #fff;
-            font-family: sans-serif;
-            min-height: 100vh;
+ font-family: Arial, sans;
             display: flex;
-            flex-direction: column;
             align-items: center;
             justify-content: center;
-            text-align: center        }
-        h1 {
-            font-size: 1.8rem;
-            margin-bottom: 6px;
-            background: linear-gradient(90deg, #00d4ff, #a855f7);
-            -webkit-background-clip: text;
-            --text-fill-color: transparent;
+            height: 100vh;
+            background-color: #f4f4f4;
         }
-        p {
-            font-size: 0.85rem            opacity: 0.45            margin-bottom: 40px;
+        #calculator {
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            padding: 20px;
+            background: white;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
         }
-        . {
-            width: 150px;
-            height: 150px;
-            border-radius:50%;
-            background: radial-gradient(circle at 38% 32%, #a855f7, #4f46e5);
+        #display {
+            width: 100%;
+            height: 40px;
+            text-align: right;
+            font-size: 24px;
+            margin-bottom: 20px;
+            padding: 5px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-sizing: border-box;
+        }
+        button {
+            width: 23%;
+            height: 40px;
+            font-size: 18px;
+            margin: 1%;
             border: none;
+            border-radius: 5px;
+            background-color: #007BFF;
+            color: white;
             cursor: pointer;
- font-size: 3rem;
-            box-shadow: 0 0 60px rgba(124, 58, 237, 0.27), 0 10px40px rgba(0, 0 0, 0.33);
-            transition: transform 0.1s;
+            transition: background-color 0.3s;
         }
-        .btn:active {
-            transform: scale(0.88);
-        }
-        .score {
-            font-size: 5rem;
-            font-weight: bold;
-            margin-top: 28px;
-            background: linear-gradient(90deg, #fff, #a5b4fc);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-        .lbl {
-            font-size: 0.75rem;
-            opacity: 0.4;
-            letter-spacing: 3px;
-            text-transform: uppercase;
-            margin-top: 6px;
+        button:hover {
+            background-color: #0056b3;
         }
     </style>
 </head>
 <body>
-    <h1>Tap Master</h1>
-    <p>флайн игра</p>
-   button class="btn" onclick="tap()">TAP</button>
-    <div class="score" id="sc">0</div>
-    <div class="lbl">очков</div>
+    <div id="calculator">
+        <input type="text" id="display" disabled>
+        <div>
+            <button onclick="clearDisplay()">C</button>
+            <button onclick="appendToDisplay('/')">/</button>
+            <button="appendToDisplay('*')">*</button>
+            <button onclick="appendToDisplay('-')">-</button>
+        </div>
+        <div>
+            <button onclick="appendToDisplay('7')">7</button>
+            <button onclick="appendToDisplay('8')">8</button>
+            <button onclick="appendToDisplay('9')">9</button>
+            <button onclick="appendTo('+')">+</button>
+        </div>
+        <div>
+            <button onclick="appendToDisplay('4')">4</button>
+ <button onclick="appendToDisplay('5')">5</button>
+            <button onclick="appendDisplay('6')">6</>
+            <button onclick="Result()">=</button>
+        </div>
+ <div>
+            <button onclick="appendToDisplay('1')">1</button>
+            <button onclick="appendToDisplay('2')">2</button>
+            <button onclick="appendToDisplay('3')">3</button>
+        </div>
+        <div>
+            <button onclick="appendToDisplay('0')"></button>
+        </div>
+    </div>
     <script>
-        let score = +localStorage.getItem('score') || 0;
-        const scoreElement = document.getElementById('sc');
-        scoreElement.textContent = score;
+        function appendToDisplay) {
+            document.getElementById('display').value += value;
+        }
 
-        function tap() {
-            score++;
-            scoreElement.textContent = score;
-            localStorage.setItem('score', score);
-            if (navigator.vibrate) navigator.vibrate(15);
+        function clearDisplay() {
+            document.getElementById('display').value = '';
+               function calculateResult() {
+            const display = document.getElementById('display');
+            try {
+                display.value = eval(display.value) || '';
+            } catch {
+                display.value = "Ошибка"
+            }
         }
     </script>
 </body>

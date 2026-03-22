@@ -3,11 +3,11 @@ android {
     compileSdkVersion 33
     buildToolsVersion "33.0.2"
     defaultConfig {
-        applicationId "com.example.myapp"
+        applicationId "com.exam.d"
         minSdkVersion 23
         targetSdkVersion 33
         versionCode 1
-        versionName "1.0.0"
+        versionName "1.0.09"
     }
     buildTypes {
         debug { debuggable true }
