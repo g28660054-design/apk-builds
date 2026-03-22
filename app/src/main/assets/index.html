@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>Tap Game</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;user-select:none}
+body{background:linear-gradient(135deg,#0f0c29,#302b63,#24243e);
+  color:#fff;font-family:sans-serif;min-height:100vh;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+h1{font-size:1.8rem;margin-bottom:6px;
+  background:linear-gradient(90deg,#00d4ff,#a855f7);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent}
+p{font-size:.85rem;opacity:.45;margin-bottom:44px}
+.btn{width:160px;height:160px;border-radius:50%;
+  background:radial-gradient(circle at 38% 32%,#a855f7,#4f46e5);border:none;
+  cursor:pointer;font-size:3.5rem;
+  box-shadow:0 0 60px #7c3aed44,0 10px 40px #00000055;
+  transition:transform .1s,box-shadow .1s}
+.btn:active{transform:scale(.88);box-shadow:0 0 20px #7c3aed22}
+.score{font-size:5rem;font-weight:bold;margin-top:32px;
+  background:linear-gradient(90deg,#fff,#a5b4fc);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.lbl{font-size:.75rem;opacity:.4;letter-spacing:3px;text-transform:uppercase;margin-top:6px}
+.best{margin-top:14px;font-size:.85rem;opacity:.35}
+</style>
+<style>
+/* Дополнительные стили */
+::-webkit-scrollbar{display:none}
+</style>
+</head>
+<body>
+<h1>Tap Master 🔮</h1>
+<p>Офлайн игра — без интернета</p>
+<button class="btn" onclick="tap()">👆</button>
+<div class="score" id="sc">0</div>
+<div class="lbl">очков</div>
+<div class="best" id="best"></div>
+<script>
+  let n=+localStorage.getItem('score')||0;
+  let b=+localStorage.getItem('best')||0;
+  const sc=document.getElementById('sc');
+  const bestEl=document.getElementById('best');
+  sc.textContent=n;
+  if(b) bestEl.textContent='Рекорд: '+b;
+  function tap(){
+    n++; sc.textContent=n;
+    localStorage.setItem('score',n);
+    if(n>b){b=n;localStorage.setItem('best',n);bestEl.textContent='Рекорд: '+b;}
+    if(navigator.vibrate) navigator.vibrate(15);
+  }
+</script>
+</body>
+</html>
