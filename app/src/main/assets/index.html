@@ -1,55 +1,117 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
-<title>Tap Game</title>
-<style>
-*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;user-select:none}
-body{background:linear-gradient(135deg,#0f0c29,#302b63,#24243e);
-  color:#fff;font-family:sans-serif;min-height:100vh;
-  display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
-h1{font-size:1.8rem;margin-bottom:6px;
-  background:linear-gradient(90deg,#00d4ff,#a855f7);
-  -webkit-background-clip:text;-webkit-text-fill-color:transparent}
-p{font-size:.85rem;opacity:.45;margin-bottom:44px}
-.btn{width:160px;height:160px;border-radius:50%;
-  background:radial-gradient(circle at 38% 32%,#a855f7,#4f46e5);border:none;
-  cursor:pointer;font-size:3.5rem;
-  box-shadow:0 0 60px #7c3aed44,0 10px 40px #00000055;
-  transition:transform .1s,box-shadow .1s}
-.btn:active{transform:scale(.88);box-shadow:0 0 20px #7c3aed22}
-.score{font-size:5rem;font-weight:bold;margin-top:32px;
-  background:linear-gradient(90deg,#fff,#a5b4fc);
-  -webkit-background-clip:text;-webkit-text-fill-color:transparent}
-.lbl{font-size:.75rem;opacity:.4;letter-spacing:3px;text-transform:uppercase;margin-top:6px}
-.best{margin-top:14px;font-size:.85rem;opacity:.35}
-</style>
-<style>
-/* Дополнительные стили */
-::-webkit-scrollbar{display:none}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Runner Game</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: linear-gradient(135deg, #cce5ff, #99ccff);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            font-family: Arial, sans-serif;
+        }
+        canvas {
+            border: 1px solid #000;
+            background: #fff;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+        }
+        #startScreen {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            opacity: 0.8;
+            background: rgba(255, 255, 255, 0.7);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
+    </style>
 </head>
 <body>
-<h1>Tap Master 🔮</h1>
-<p>Офлайн игра — без интернета</p>
-<button class="btn" onclick="tap()">👆</button>
-<div class="score" id="sc">0</div>
-<div class="lbl">очков</div>
-<div class="best" id="best"></div>
-<script>
-  let n=+localStorage.getItem('score')||0;
-  let b=+localStorage.getItem('best')||0;
-  const sc=document.getElementById('sc');
-  const bestEl=document.getElementById('best');
-  sc.textContent=n;
-  if(b) bestEl.textContent='Рекорд: '+b;
-  function tap(){
-    n++; sc.textContent=n;
-    localStorage.setItem('score',n);
-    if(n>b){b=n;localStorage.setItem('best',n);bestEl.textContent='Рекорд: '+b;}
-    if(navigator.vibrate) navigator.vibrate(15);
-  }
-</script>
+    <div id="startScreen">
+        <h1>Runner Game</h1>
+        <button id="startButton">Начать игру</button>
+    </div>
+    <canvas id="gameCanvas" width="800" height="400"></canvas>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const gravity = 0.5;
+        const jumpStrength = 10;
+        let isJumping = false;
+        let jumpVelocity = 0;
+
+        let score = 0;
+        const scoreElement = document.createElement('div');
+        scoreElement.style.position = 'absolute';
+        scoreElement.style.top = '10px';
+        scoreElement.style.right = '20px';
+        scoreElement.style.fontSize = '20px';
+        scoreElement.innerHTML = 'Счет: ' + score;
+        document.body.appendChild(scoreElement);
+
+        const player = {
+            x: 50,
+            y: 200,
+            width: 40,
+            height: 40,
+            color: 'red',
+            update() {
+                if (this.y + this.height < canvas.height) {
+                    this.y += jumpVelocity;
+                    jumpVelocity += gravity;
+                } else {
+                    this.y = canvas.height - this.height;
+                    jumpVelocity = 0;
+                }
+            },
+            jump() {
+                if (this.y === canvas.height - this.height) {
+                    jumpVelocity = -jumpStrength;
+                    navigator.vibrate(100);
+                }
+            },
+            draw() {
+                ctx.fillStyle = this.color;
+                ctx.fillRect(this.x, this.y, this.width, this.height);
+            }
+        };
+
+        function resetGame() {
+            score = 0;
+            player.y = canvas.height - player.height;
+            jumpVelocity = 0;
+            scoreElement.innerHTML = 'Счет: ' + score;
+            localStorage.setItem('highScore', Math.max(score, localStorage.getItem('highScore') || 0));
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            player.update();
+            player.draw();
+            scoreElement.innerHTML = 'Счет: ' + score++;
+            requestAnimationFrame(draw);
+        }
+
+        document.getElementByIdstartButton').addEventListener('click', function() {
+           .getElementById('startScreen').style.display = 'none';
+            resetGame();
+            draw();
+        });
+
+        window.addEventListener('keydown', (event) => {
+            if (event.code === 'Space {
+                player.jump();
+            }
+        });
+    </script>
 </body>
 </html>
