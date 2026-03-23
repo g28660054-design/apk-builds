@@ -14,29 +14,37 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Install Gradle 7.6.4
+      - name: Build
         run: |
-          wget -q https://services.gradle.org/distributions/gradle-7.6.4-bin.zip -O /tmp/gradle.zip
-          unzip -q /tmp/gradle.zip -d /opt/gradle
-          echo "/opt/gradle/gradle-7.6.4/bin" >> $GITHUB_PATH
-          chmod +x /opt/gradle/gradle-7.6.4/bin/gradle
+          set -e
 
-      - name: Setup Android SDK
-        run: |
-          CMDLINE_TOOLS=$ANDROID_HOME/cmdline-tools/latest/bin
-          echo "$CMDLINE_TOOLS" >> $GITHUB_PATH
-          echo "$ANDROID_HOME/platform-tools" >> $GITHUB_PATH
-          export PATH="$CMDLINE_TOOLS:$PATH"
-          sdkmanager "platforms;android-33" "build-tools;33.0.2"
-          yes | sdkmanager --licenses || true
-        env:
-          ANDROID_HOME: ${{ env.ANDROID_HOME }}
+          # ── Install Gradle ──
+          wget -q https://services.gradle.org/distributions/gradle-7.6.4-bin.zip -O /tmp/g.zip
+          unzip -q /tmp/g.zip -d /opt/gradle
+          GRADLE=/opt/gradle/gradle-7.6.4/bin/gradle
+          chmod +x $GRADLE
 
-      - name: Generate Keystore
-        run: keytool -genkeypair -noprompt -keystore app/keystore.jks -alias "mykey" -keyalg RSA -keysize 2048 -validity 10000 -storepass "android123" -keypass "android123" -dname "CN=APKBuilder,OU=Dev,O=APKBuilder,L=City,S=State,C=US" && echo "--- KEYSTORE BASE64 ---" && base64 -w 0 app/keystore.jks && echo "" && echo "--- END ---"
+          # ── Android SDK ──
+          SDKMANAGER=$(find "$ANDROID_HOME" -name sdkmanager 2>/dev/null | head -1)
+          echo "sdkmanager: $SDKMANAGER"
+          yes | "$SDKMANAGER" --licenses > /dev/null 2>&1 || true
+          "$SDKMANAGER" "platforms;android-33" "build-tools;33.0.2"
 
-      - name: Build APK
-        run: /opt/gradle/gradle-7.6.4/bin/gradle assembleRelease --no-daemon --stacktrace
+          # ── Generate keystore ──
+          keytool -genkeypair -noprompt \
+            -keystore app/keystore.jks \
+            -alias "mykey" \
+            -keyalg RSA -keysize 2048 -validity 10000 \
+            -storepass "android123" \
+            -keypass "android123" \
+            -dname "CN=Dev,OU=Dev,O=Dev,L=City,S=State,C=US"
+          echo "=== KEYSTORE B64 START ==="
+          base64 -w 0 app/keystore.jks
+          echo ""
+          echo "=== KEYSTORE B64 END ==="
+
+          # ── Compile ──
+          $GRADLE assembleRelease --no-daemon --stacktrace
         env:
           ANDROID_HOME: ${{ env.ANDROID_HOME }}
 
