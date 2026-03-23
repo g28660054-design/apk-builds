@@ -1,8 +1,6 @@
 name: Build APK
 on:
   workflow_dispatch:
-  push:
-    branches: [ main, master ]
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -12,25 +10,31 @@ jobs:
         with:
           java-version: '17'
           distribution: 'temurin'
-      - name: Install Gradle
-        run: |
-          wget -q https://services.gradle.org/distributions/gradle-7.6.4-bin.zip -O /tmp/gradle.zip
-          unzip -q /tmp/gradle.zip -d /opt/gradle
-          echo "/opt/gradle/gradle-7.6.4/bin" >> $GITHUB_PATH
       - uses: android-actions/setup-android@v3
       - name: Install SDK
         run: |
           sdkmanager "platforms;android-33" "build-tools;33.0.2" --sdk_root=$ANDROID_HOME
           yes | sdkmanager --licenses --sdk_root=$ANDROID_HOME || true
+      - name: Make gradlew executable
+        run: chmod +x gradlew
+      - name: Generate keystore
+        run: |
+          keytool -genkeypair -v \
+            -keystore app/keystore.jks \
+            -alias appkey \
+            -keyalg RSA -keysize 2048 -validity 10000 \
+            -storepass buildpass -keypass buildpass \
+            -dname "CN=APKBuilder,OU=Dev,O=App,L=City,S=State,C=US" \
+            -storetype JKS
       - name: Build APK
-        run: gradle assembleDebug
+        run: ./gradlew assembleRelease
         env:
           ANDROID_HOME: ${{ env.ANDROID_HOME }}
-          STORE_PASS: "android123"
-          KEY_ALIAS: "mykey"
-          KEY_PASS: "android123"
+          STORE_PASS: "buildpass"
+          KEY_ALIAS: "appkey"
+          KEY_PASS: "buildpass"
       - uses: actions/upload-artifact@v4
         with:
           name: app-apk
-          path: app/build/outputs/apk/debug/*.apk
+          path: app/build/outputs/apk/release/*.apk
           retention-days: 7

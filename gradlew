@@ -1,3 +1,5 @@
-#!/usr/bin/env sh
-GRADLE_OPTS=""
-exec /opt/gradle/gradle-7.6.4/bin/gradle "$@"
+#!/bin/sh
+# Gradle wrapper startup script for Unix
+APP_HOME=`pwd`
+CLASSPATH=$APP_HOME/gradle/wrapper/gradle-wrapper.jar
+exec java -cp "$CLASSPATH" org.gradle.wrapper.GradleWrapperMain "$@"
