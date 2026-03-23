@@ -1,3 +1,3 @@
 #!/usr/bin/env sh
-CLASSPATH=$(pwd)/gradle/wrapper/gradle-wrapper.jar
-exec java -classpath "$CLASSPATH" org.gradle.wrapper.GradleWrapperMain "$@"
+GRADLE_OPTS=""
+exec /opt/gradle/gradle-7.6.4/bin/gradle "$@"
