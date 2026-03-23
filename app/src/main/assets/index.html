@@ -34,10 +34,8 @@
       return JSON.parse(ns.getAllKeys()||'[]').length;
     }
   };
-  // Override both localStorage and sessionStorage
   try{Object.defineProperty(window,'localStorage',{get:function(){return store;},configurable:true});}catch(e){}
   try{Object.defineProperty(window,'sessionStorage',{get:function(){return store;},configurable:true});}catch(e){}
-  // Also available as window._storage for direct use
   window._storage=store;
 })();
 </script>
@@ -571,7 +569,6 @@ input[type=file]{display:none}
 
 <!-- ── PAGE: GITHUB ── -->
 <div class="page" id="pg-github">
-  <!-- Connected state (shown after setup) -->
   <div class="gh-connected" id="ghConnected" style="display:none">
     <div class="gh-card">
       <div class="gh-card-row">
@@ -603,7 +600,6 @@ input[type=file]{display:none}
       </div>
     </div>
   </div>
-  <!-- Hidden input for token (used by build system) -->
   <input type="hidden" id="ghToken" value="">
 </div>
 
@@ -708,7 +704,6 @@ input[type=file]{display:none}
 <!-- ── PAGE: FILES ── -->
 <div class="page pg-files" id="pg-files">
   <div class="fm-wrap" id="fmWrap">
-    <!-- Tree -->
     <div class="fm-tree" id="fmTree">
       <div class="fm-tree-hdr">
         <span>Файлы</span>
@@ -726,7 +721,6 @@ input[type=file]{display:none}
       <div class="fm-tree-body" id="treeBody"></div>
     </div>
 
-    <!-- Toggle button -->
     <button class="tree-toggle" id="treeToggle" onclick="toggleTree()">
       <svg class="tog-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
       <span class="tog-preview-btn" title="Превью" onclick="openPreview(event)">
@@ -734,15 +728,13 @@ input[type=file]{display:none}
       </span>
     </button>
 
-    <!-- Editor -->
     <div class="fm-editor">
       <div class="fm-editor-top" id="editorTop">
         <span class="fm-filepath" id="currentFilePath">Выбери файл</span>
-        <!-- Action buttons shown when file is open -->
-        <button class="ed-action-btn" id="btnCopy" onclick="copyFileText()" style="display:none" title="Скопировать всё">
+        <button class="ed-action-btn" id="btnCopy" onclick="copyFileText()" style="display:none">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>Копировать
         </button>
-        <button class="ed-action-btn red" id="btnClear" onclick="clearFileContent()" style="display:none" title="Очистить файл">
+        <button class="ed-action-btn red" id="btnClear" onclick="clearFileContent()" style="display:none">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg>Очистить
         </button>
         <button class="ed-action-btn green" id="btnFixCode" onclick="aiFixCode()" style="display:none">
@@ -771,7 +763,6 @@ input[type=file]{display:none}
 
 <!-- ── PAGE: AI ── -->
 <div class="page" id="pg-ai">
-  <!-- Auto-build -->
   <div class="ai-section">
     <div class="ai-section-title purple">
       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
@@ -782,7 +773,6 @@ input[type=file]{display:none}
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
       Сгенерировать и собрать APK
     </button>
-    <!-- Generated code preview -->
     <div class="ai-generated-code" id="generatedCodeBlock">
       <div style="font-size:10px;color:var(--green);font-weight:700;margin-bottom:6px;font-family:var(--mono)">Код сгенерирован</div>
       <div class="ai-code-preview" id="generatedCodePreview"></div>
@@ -793,7 +783,6 @@ input[type=file]{display:none}
     </div>
   </div>
 
-  <!-- AI Assistant -->
   <div class="ai-section" style="border-bottom:none;padding-bottom:6px">
     <div class="ai-section-title green">
       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
@@ -965,7 +954,6 @@ function initCM(){
 
 function showEditorBtns(show){
   ['btnCopy','btnClear','btnSave'].forEach(id=>document.getElementById(id).style.display=show?'':'none');
-  // Show fix/improve only for text files
   const isTextFile = currentFile && isText(currentFile);
   ['btnFixCode','btnImprove'].forEach(id=>document.getElementById(id).style.display=(show&&isTextFile)?'':'none');
 }
@@ -1010,7 +998,6 @@ function saveCurrentFile(){
 function copyFileText(){
   if(!cm)return;
   navigator.clipboard.writeText(cm.getValue()).then(()=>toast('Скопировано','ok')).catch(()=>{
-    // Fallback
     const ta=document.createElement('textarea');ta.value=cm.getValue();
     document.body.appendChild(ta);ta.select();document.execCommand('copy');
     document.body.removeChild(ta);toast('Скопировано','ok');
@@ -1037,26 +1024,16 @@ function toggleTree(){
 // ==================== PREVIEW ====================
 function openPreview(e){
   if(e){e.stopPropagation();}
-  // Save current editor content first
   if(currentFile&&cm&&!vfsGet(currentFile)?.binary){const f=vfsGet(currentFile);if(f)f.content=cm.getValue();}
-
-  // Build a full HTML with all vfs files injected where possible
   const indexFile=vfsGet('index.html');
   if(!indexFile){toast('Нет index.html для превью','warn');return;}
-
-  // Inject CSS and JS inline for preview
   let html=indexFile.content||'';
-  // Replace relative <link href="...css"> with inline <style>
   html=html.replace(/<link[^>]+href=["']([^"']+\.css)["'][^>]*>/gi,(match,href)=>{
-    const f=vfsGet(href);
-    return f?`<style>${f.content}</style>`:match;
+    const f=vfsGet(href);return f?`<style>${f.content}</style>`:match;
   });
-  // Replace relative <script src="...js"> with inline <script>
   html=html.replace(/<script[^>]+src=["']([^"']+\.js)["'][^>]*><\/script>/gi,(match,src)=>{
-    const f=vfsGet(src);
-    return f?`<script>${f.content}<\/script>`:match;
+    const f=vfsGet(src);return f?`<script>${f.content}<\/script>`:match;
   });
-
   const blob=new Blob([html],{type:'text/html'});
   const url=URL.createObjectURL(blob);
   const frame=document.getElementById('previewFrame');
@@ -1065,7 +1042,6 @@ function openPreview(e){
   document.getElementById('previewTitle').textContent=currentFile||'index.html';
   document.getElementById('previewOverlay').classList.add('show');
 }
-
 function closePreview(){
   document.getElementById('previewOverlay').classList.remove('show');
   document.getElementById('previewFrame').src='about:blank';
@@ -1099,10 +1075,6 @@ dz.addEventListener('dragleave',()=>dz.classList.remove('drag-over'));
 dz.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('drag-over');handleUpload(e.dataTransfer.files);});
 
 // ==================== ICON ====================
-document.getElementById('iconFile').addEventListener('change',function(){
-  const f=this.files[0];if(!f)return;
-  const r=new FileReader();r.onload=e=>{iconB64=e.target.result.split(',')[1];document.getElementById('iconPrev').innerHTML=`<img src="${e.target.result}" style="width:100%;height:100%;object-fit:cover">`;toast('Иконка загружена','ok');};r.readAsDataURL(f);
-});
 function genDefaultIcon(size){
   const c=document.createElement('canvas');c.width=size;c.height=size;
   const ctx=c.getContext('2d'),g=ctx.createLinearGradient(0,0,size,size);
@@ -1123,7 +1095,6 @@ async function genIcons(src){
 // ==================== UI ====================
 document.querySelectorAll('.tabs .tab').forEach(b=>{
   b.addEventListener('click',()=>{
-    // Save project state when leaving files tab
     if(document.querySelector('.tab[data-page="pg-files"]')?.classList.contains('active')){
       saveProjectState&&saveProjectState();
     }
@@ -1135,7 +1106,7 @@ document.querySelectorAll('.tabs .tab').forEach(b=>{
   });
 });
 document.querySelectorAll('.pills').forEach(g=>g.querySelectorAll('.pill').forEach(p=>p.addEventListener('click',()=>{g.querySelectorAll('.pill').forEach(x=>x.classList.remove('active'));p.classList.add('active');})));
-function toggleTok(){} // legacy stub
+function toggleTok(){}
 
 // ==================== ONBOARDING ====================
 function obTokenInput(val){
@@ -1143,22 +1114,11 @@ function obTokenInput(val){
   const hint=document.getElementById('obTokenHint');
   const btn=document.getElementById('obStartBtn');
   const inp=document.getElementById('obToken');
-  if(!val){
-    hint.textContent='Вставь токен из GitHub (начинается с ghp_)';
-    hint.className='ob-token-hint';
-    inp.classList.remove('valid');
-    btn.disabled=true;return;
-  }
+  if(!val){hint.textContent='Вставь токен из GitHub (начинается с ghp_)';hint.className='ob-token-hint';inp.classList.remove('valid');btn.disabled=true;return;}
   if(val.startsWith('ghp_')&&val.length>=20){
-    hint.textContent='✓ Токен выглядит правильно';
-    hint.className='ob-token-hint ok';
-    inp.classList.add('valid');
-    btn.disabled=false;
+    hint.textContent='✓ Токен выглядит правильно';hint.className='ob-token-hint ok';inp.classList.add('valid');btn.disabled=false;
   }else{
-    hint.textContent='Токен должен начинаться с ghp_ и быть достаточно длинным';
-    hint.className='ob-token-hint err';
-    inp.classList.remove('valid');
-    btn.disabled=true;
+    hint.textContent='Токен должен начинаться с ghp_ и быть достаточно длинным';hint.className='ob-token-hint err';inp.classList.remove('valid');btn.disabled=true;
   }
 }
 
@@ -1173,17 +1133,17 @@ async function obStart(){
     const me=await fetch('https://api.github.com/user',{headers:{'Authorization':'Bearer '+token,'Accept':'application/vnd.github.v3+json'}});
     if(!me.ok)throw new Error('Токен недействителен ('+me.status+')');
     const user=await me.json();
-    // Save to app state
     document.getElementById('ghToken').value=token;
     document.getElementById('ghRepo').value=repo;
     ghSetConnected(user,token);
     document.getElementById('onboard').classList.add('hidden');
-    // Save to sessionStorage so survives tab switches but not page reload (privacy)
+    // ── FIX 1: сохраняем токен и репо в обоих хранилищах ──
     sessionStorage.setItem('gh_token',token);
     sessionStorage.setItem('gh_repo',repo);
+    localStorage.setItem('apkb_token',token);
+    localStorage.setItem('apkb_repo',repo);
   }catch(e){
-    hint.textContent='✗ '+e.message;
-    hint.className='ob-token-hint err';
+    hint.textContent='✗ '+e.message;hint.className='ob-token-hint err';
     btn.disabled=false;
     btn.innerHTML='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>Начать работу';
   }
@@ -1198,8 +1158,11 @@ function ghSetConnected(user,token){
 }
 
 function ghDisconnect(){
+  // ── FIX 2: чистим оба хранилища ──
   sessionStorage.removeItem('gh_token');
   sessionStorage.removeItem('gh_repo');
+  localStorage.removeItem('apkb_token');
+  localStorage.removeItem('apkb_repo');
   document.getElementById('ghToken').value='';
   document.getElementById('ghConnected').style.display='none';
   document.getElementById('onboard').classList.remove('hidden');
@@ -1278,56 +1241,41 @@ async function ghFetch(path,method,tok,body){
   if(!r.ok){const e=await r.json().catch(()=>({message:r.statusText}));throw new Error(e.message||r.statusText);}
   return r.json();
 }
-// tb64 — конвертирует строку в base64 (O(n), чанки по 32KB, работает с большими файлами)
 function tb64(str){
-  const bytes = new TextEncoder().encode(str);
-  const CHUNK = 32768;
-  let binary = '';
-  for(let i = 0; i < bytes.length; i += CHUNK){
-    binary += String.fromCharCode.apply(null, bytes.subarray(i, i + CHUNK));
-  }
+  const bytes=new TextEncoder().encode(str);
+  const CHUNK=32768;let binary='';
+  for(let i=0;i<bytes.length;i+=CHUNK){binary+=String.fromCharCode.apply(null,bytes.subarray(i,i+CHUNK));}
   return btoa(binary);
 }
 
 // ==================== GITHUB MODELS AI ====================
 async function ghModelsAI(messages, onChunk){
-  const token = document.getElementById('ghToken').value.trim();
+  const token=document.getElementById('ghToken').value.trim();
   if(!token) throw new Error('Нет токена GitHub');
-  const r = await fetch('https://models.inference.ai.azure.com/chat/completions', {
+  const r=await fetch('https://models.inference.ai.azure.com/chat/completions',{
     method:'POST',
     headers:{'Authorization':'Bearer '+token,'Content-Type':'application/json'},
-    body: JSON.stringify({
-      model: 'gpt-4o-mini',
-      messages,
-      max_tokens: 4000,
-      stream: true
-    })
+    body:JSON.stringify({model:'gpt-4o-mini',messages,max_tokens:4000,stream:true})
   });
   if(!r.ok){const e=await r.text();throw new Error('AI API: '+r.status+' '+e.slice(0,100));}
-  const reader = r.body.getReader();
-  const decoder = new TextDecoder();
-  let full = '';
+  const reader=r.body.getReader();
+  const decoder=new TextDecoder();
+  let full='';
   while(true){
-    const {done,value} = await reader.read();
-    if(done) break;
-    const chunk = decoder.decode(value);
-    const lines = chunk.split('\n');
+    const {done,value}=await reader.read();if(done)break;
+    const chunk=decoder.decode(value);
+    const lines=chunk.split('\n');
     for(const line of lines){
-      if(!line.startsWith('data:')) continue;
-      const data = line.slice(5).trim();
-      if(data==='[DONE]') break;
-      try{
-        const j = JSON.parse(data);
-        const t = j.choices?.[0]?.delta?.content||'';
-        if(t){full+=t;if(onChunk)onChunk(t,full);}
-      }catch{}
+      if(!line.startsWith('data:'))continue;
+      const data=line.slice(5).trim();if(data==='[DONE]')break;
+      try{const j=JSON.parse(data);const t=j.choices?.[0]?.delta?.content||'';if(t){full+=t;if(onChunk)onChunk(t,full);}}catch{}
     }
   }
   return full;
 }
 
 // ==================== AI ASSISTANT ====================
-const aiHistory = [{role:'system',content:'Ты помощник разработчика Android-приложений. Помогаешь с HTML, CSS, JavaScript, ошибками сборки APK. Отвечай кратко и по делу. Если показываешь код — оборачивай в ```html или ```js.'}];
+const aiHistory=[{role:'system',content:'Ты помощник разработчика Android-приложений. Помогаешь с HTML, CSS, JavaScript, ошибками сборки APK. Отвечай кратко и по делу. Если показываешь код — оборачивай в ```html или ```js.'}];
 
 async function sendAiMsg(){
   const inp=document.getElementById('aiInput');
@@ -1346,7 +1294,6 @@ async function sendAiMsg(){
   }
   btn.disabled=false;
 }
-
 function addAiMsg(role,html){
   const msgs=document.getElementById('aiMsgs');
   const div=document.createElement('div');div.className='ai-msg '+role;
@@ -1355,9 +1302,7 @@ function addAiMsg(role,html){
   return div;
 }
 function escHtml(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
-function formatAiMsg(text){
-  return text.replace(/```(\w*)\n?([\s\S]*?)```/g,'<pre>$2</pre>').replace(/`([^`]+)`/g,'<code>$1</code>').replace(/\n/g,'<br>');
-}
+function formatAiMsg(text){return text.replace(/```(\w*)\n?([\s\S]*?)```/g,'<pre>$2</pre>').replace(/`([^`]+)`/g,'<code>$1</code>').replace(/\n/g,'<br>');}
 
 // ==================== AI FIX/IMPROVE CODE ====================
 async function aiFixCode(){
@@ -1370,8 +1315,7 @@ async function aiFixCode(){
       {role:'system',content:'Ты эксперт по веб-разработке. Исправь все ошибки в коде. Верни ТОЛЬКО исправленный код без объяснений, без markdown блоков.'},
       {role:'user',content:`Исправь ошибки в этом файле (${currentFile}):\n\n${code}`}
     ],null);
-    cm.setValue(result.trim());saveCurrentFile();
-    toast('Ошибки исправлены','ok');
+    cm.setValue(result.trim());saveCurrentFile();toast('Ошибки исправлены','ok');
   }catch(e){toast('Ошибка AI: '+e.message,'err');}
   btn.disabled=false;btn.innerHTML=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="11" height="11"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>Исправить`;
 }
@@ -1385,8 +1329,7 @@ async function aiImproveCode(){
       {role:'system',content:'Ты эксперт по веб-разработке. Улучши код: читаемость, производительность, современные практики. Верни ТОЛЬКО улучшенный код без объяснений, без markdown блоков.'},
       {role:'user',content:`Улучши этот файл (${currentFile}):\n\n${code}`}
     ],null);
-    cm.setValue(result.trim());saveCurrentFile();
-    toast('Код улучшен','ok');
+    cm.setValue(result.trim());saveCurrentFile();toast('Код улучшен','ok');
   }catch(e){toast('Ошибка AI: '+e.message,'err');}
   btn.disabled=false;btn.innerHTML=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="11" height="11"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>Улучшить`;
 }
@@ -1404,8 +1347,6 @@ async function autoBuild(){
       {role:'system',content:'Ты создаёшь HTML5 игры и приложения. Создай ПОЛНЫЙ самодостаточный HTML файл по описанию пользователя. Только HTML код, без объяснений, без markdown блоков. Приложение должно работать офлайн. Используй красивый дизайн, анимации, localStorage для сохранения данных. Обязательно добавь: красивый градиентный фон, плавные анимации, вибрацию через navigator.vibrate().'},
       {role:'user',content:prompt}
     ],(chunk,cumul)=>{code=cumul;document.getElementById('generatedCodePreview').textContent=cumul.slice(0,200)+'...';});
-
-    // Clean up in case model wrapped in markdown
     code=code.replace(/^```html\n?/,'').replace(/^```\n?/,'').replace(/\n?```$/,'').trim();
     generatedCode=code;
     document.getElementById('generatedCodePreview').textContent=code.slice(0,300)+'...';
@@ -1417,7 +1358,6 @@ async function autoBuild(){
     btn.disabled=false;btn.innerHTML='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>Сгенерировать и собрать APK';
   }
 }
-
 function openGeneratedInEditor(){
   if(!generatedCode)return;
   const f=vfsGet('index.html');if(f)f.content=generatedCode;
@@ -1426,7 +1366,6 @@ function openGeneratedInEditor(){
   document.querySelector('[data-page="pg-files"]').click();
   toast('Код открыт в редакторе','ok');
 }
-
 function buildGeneratedCode(){
   if(!generatedCode)return;
   const f=vfsGet('index.html');if(f)f.content=generatedCode;else vfsSet('index.html',generatedCode);
@@ -1585,13 +1524,11 @@ async function startBuild(type){
     for(let i=0;i<files.length;i++){
       const f=files[i];
       stepSet('s3','active',`${i+1}/${files.length} (${Math.round(f.b64.length/1024)}KB)...`);
-      // Retry up to 3 times per blob — large files can timeout on slow connections
       let blobSha=null;
       for(let attempt=1;attempt<=3;attempt++){
         try{
           const res=await ghFetch(`/repos/${user}/${repoName}/git/blobs`,'POST',token,{content:f.b64,encoding:'base64'});
-          blobSha=res.sha;
-          break;
+          blobSha=res.sha;break;
         }catch(e){
           if(attempt===3)throw new Error(`Не удалось загрузить ${f.path}: ${e.message}`);
           await new Promise(r=>setTimeout(r,2000*attempt));
@@ -1696,10 +1633,6 @@ async function buildProjectFiles({appName,pkg,pkgPath,verName,verCode,orient,ful
   const t=(p,s)=>files.push({path:p,b64:tb64(s)});
   const b=(p,b64)=>files.push({path:p,b64});
 
-  // ── Storage shim script — injected into EVERY HTML at build time ──
-  // Runs before any page code. In browser _NativeStorage is undefined → no-op.
-  // In APK _NativeStorage is the @JavascriptInterface → all localStorage calls
-  // transparently persist to Android SharedPreferences.
   const STORAGE_SHIM = `<script id="_apkb_shim">
 (function(){
   if(typeof _NativeStorage==='undefined')return;
@@ -1734,50 +1667,39 @@ async function buildProjectFiles({appName,pkg,pkgPath,verName,verCode,orient,ful
       return JSON.parse(ns.getAllKeys()||'[]').length;
     }
   };
-  // Override both localStorage and sessionStorage
   try{Object.defineProperty(window,'localStorage',{get:function(){return store;},configurable:true});}catch(e){}
   try{Object.defineProperty(window,'sessionStorage',{get:function(){return store;},configurable:true});}catch(e){}
-  // Also available as window._storage for direct use
   window._storage=store;
 })();
 <\/script>`;
 
   function injectShimIntoHtml(html){
-    // Insert right after <head> or <html> or at very start — before any other scripts
-    if(html.indexOf('<head>')!==-1)
-      return html.replace('<head>','<head>'+STORAGE_SHIM);
-    if(html.indexOf('<HEAD>')!==-1)
-      return html.replace('<HEAD>','<HEAD>'+STORAGE_SHIM);
-    if(html.indexOf('<html')!==-1)
-      return html.replace(/(<html[^>]*>)/i,'$1'+STORAGE_SHIM);
-    // No head tag — prepend
+    if(html.indexOf('<head>')!==-1)return html.replace('<head>','<head>'+STORAGE_SHIM);
+    if(html.indexOf('<HEAD>')!==-1)return html.replace('<HEAD>','<HEAD>'+STORAGE_SHIM);
+    if(html.indexOf('<html')!==-1)return html.replace(/(<html[^>]*>)/i,'$1'+STORAGE_SHIM);
     return STORAGE_SHIM+html;
   }
 
-  // Splash screen
   t('app/src/main/assets/splash.html', generateSplash(appName));
 
-  // User files — inject shim into every HTML file
   for(const f of vfs){
     const ap='app/src/main/assets/'+f.path;
-    if(f.binary){
-      b(ap,f.content);
-    } else {
+    if(f.binary){b(ap,f.content);}
+    else{
       const isHtml=/\.(html?|htm)$/i.test(f.path);
       const content=isHtml?injectShimIntoHtml(f.content||''):(f.content||'');
       t(ap,content);
     }
   }
 
-  // Build the list of dangerous permissions the user actually selected
-  const dangerousSet = new Set(['CAMERA','RECORD_AUDIO','READ_EXTERNAL_STORAGE','WRITE_EXTERNAL_STORAGE',
+  const dangerousSet=new Set(['CAMERA','RECORD_AUDIO','READ_EXTERNAL_STORAGE','WRITE_EXTERNAL_STORAGE',
     'ACCESS_FINE_LOCATION','ACCESS_COARSE_LOCATION','READ_CONTACTS','WRITE_CONTACTS',
     'READ_CALENDAR','WRITE_CALENDAR','SEND_SMS','RECEIVE_SMS','CALL_PHONE',
     'BLUETOOTH_CONNECT','POST_NOTIFICATIONS']);
-  const selectedDangerousPerms = (permsArr||[]).filter(p=>dangerousSet.has(p));
-  const runtimePermsList = selectedDangerousPerms.length > 0
-    ? selectedDangerousPerms.map(p=>`            "android.permission.${p}"`).join(',\n')
-    : '            // no dangerous permissions selected';
+  const selectedDangerousPerms=(permsArr||[]).filter(p=>dangerousSet.has(p));
+  const runtimePermsList=selectedDangerousPerms.length>0
+    ?selectedDangerousPerms.map(p=>`            "android.permission.${p}"`).join(',\n')
+    :'            // no dangerous permissions selected';
 
   t(`app/src/main/java/${pkgPath}/MainActivity.java`,
 `package ${pkg};
@@ -1816,7 +1738,6 @@ public class MainActivity extends Activity {
     static final int FILE_CHOOSER_CODE = 1;
     static final int PERM_CODE = 2;
 
-    // ── Native Storage Bridge (bypasses WebView localStorage quirks) ──
     public class StorageBridge {
         private final SharedPreferences prefs;
         StorageBridge(Context ctx){prefs=ctx.getSharedPreferences("app_storage",Context.MODE_PRIVATE);}
@@ -1857,31 +1778,22 @@ public class MainActivity extends Activity {
         ws.setDisplayZoomControls(false);
         ws.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
         ws.setUserAgentString(ws.getUserAgentString()+" APKBuilder/1.0");
-
-        // Inject native storage bridge — replaces localStorage in WebView
         wv.addJavascriptInterface(new StorageBridge(this),"_NativeStorage");
-
-        // File download → Android DownloadManager
         wv.setDownloadListener(new android.webkit.DownloadListener(){
             @Override public void onDownloadStart(String url,String ua,String cd,String mime,long len){
                 try{
                     String fileName=URLUtil.guessFileName(url,cd,mime);
                     if(fileName==null||fileName.isEmpty())fileName="download";
                     DownloadManager.Request req=new DownloadManager.Request(Uri.parse(url));
-                    req.setMimeType(mime);
-                    req.addRequestHeader("User-Agent",ua);
-                    req.setTitle(fileName);
-                    req.setDescription("Скачивание...");
+                    req.setMimeType(mime);req.addRequestHeader("User-Agent",ua);
+                    req.setTitle(fileName);req.setDescription("Скачивание...");
                     req.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
                     req.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS,fileName);
                     ((DownloadManager)getSystemService(Context.DOWNLOAD_SERVICE)).enqueue(req);
                     Toast.makeText(MainActivity.this,"⬇ "+fileName,Toast.LENGTH_SHORT).show();
-                }catch(Exception e){
-                    startActivity(new Intent(Intent.ACTION_VIEW,Uri.parse(url)));
-                }
+                }catch(Exception e){startActivity(new Intent(Intent.ACTION_VIEW,Uri.parse(url)));}
             }
         });
-
         wv.setWebViewClient(new WebViewClient(){
             @Override public boolean shouldOverrideUrlLoading(WebView v,String url){
                 if(url.startsWith("tel:")){startActivity(new Intent(Intent.ACTION_DIAL,Uri.parse(url)));return true;}
@@ -1891,7 +1803,6 @@ public class MainActivity extends Activity {
             }
             @Override public void onReceivedError(WebView v,int c,String d,String u){}
         });
-
         wv.setWebChromeClient(new WebChromeClient(){
             @Override public boolean onJsAlert(WebView v,String url,String msg,final JsResult r){
                 new AlertDialog.Builder(MainActivity.this).setMessage(msg).setCancelable(false)
@@ -1919,11 +1830,8 @@ public class MainActivity extends Activity {
                 catch(Exception e){filePathCallback=null;}
                 return true;
             }
-            @Override public void onPermissionRequest(PermissionRequest request){
-                request.grant(request.getResources());
-            }
+            @Override public void onPermissionRequest(PermissionRequest request){request.grant(request.getResources());}
         });
-
         requestRuntimePerms();
         if(s!=null) wv.restoreState(s);
         else wv.loadUrl("file:///android_asset/splash.html");
@@ -1931,16 +1839,12 @@ public class MainActivity extends Activity {
 
     void requestRuntimePerms(){
         if(Build.VERSION.SDK_INT<Build.VERSION_CODES.M) return;
-        // Only the permissions the developer actually selected:
         String[] selected={
 ${runtimePermsList}
         };
         if(selected.length==0) return;
         List<String> need=new ArrayList<>();
-        for(String p:selected){
-            try{if(checkSelfPermission(p)!=PackageManager.PERMISSION_GRANTED)need.add(p);}
-            catch(Exception ignored){}
-        }
+        for(String p:selected){try{if(checkSelfPermission(p)!=PackageManager.PERMISSION_GRANTED)need.add(p);}catch(Exception ignored){}}
         if(!need.isEmpty()) requestPermissions(need.toArray(new String[0]),PERM_CODE);
     }
 
@@ -1982,40 +1886,12 @@ ${perms}
 </manifest>`);
 
   for(const dpi of['ldpi','mdpi','hdpi','xhdpi','xxhdpi','xxxhdpi']){if(icons[dpi])b(`app/src/main/res/mipmap-${dpi}/ic_launcher.png`,icons[dpi]);}
-  t('app/src/main/res/values/strings.xml',
-`<?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <string name="app_name">${appName}</string>
-</resources>`);
-  t('app/src/main/res/values/styles.xml',
-`<?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <style name="AppTheme" parent="android:Theme.Material.NoActionBar">
-        <item name="android:windowBackground">@android:color/black</item>
-    </style>
-</resources>`);
-  t('app/src/main/res/xml/network_security_config.xml',
-`<?xml version="1.0" encoding="utf-8"?>
-<network-security-config>
-    <base-config cleartextTrafficPermitted="true">
-        <trust-anchors>
-            <certificates src="system"/>
-            <certificates src="user"/>
-        </trust-anchors>
-    </base-config>
-</network-security-config>`);
+  t('app/src/main/res/values/strings.xml',`<?xml version="1.0" encoding="utf-8"?>\n<resources>\n    <string name="app_name">${appName}</string>\n</resources>`);
+  t('app/src/main/res/values/styles.xml',`<?xml version="1.0" encoding="utf-8"?>\n<resources>\n    <style name="AppTheme" parent="android:Theme.Material.NoActionBar">\n        <item name="android:windowBackground">@android:color/black</item>\n    </style>\n</resources>`);
+  t('app/src/main/res/xml/network_security_config.xml',`<?xml version="1.0" encoding="utf-8"?>\n<network-security-config>\n    <base-config cleartextTrafficPermitted="true">\n        <trust-anchors>\n            <certificates src="system"/>\n            <certificates src="user"/>\n        </trust-anchors>\n    </base-config>\n</network-security-config>`);
 
-  // app/build.gradle
-  const gradleSigningBlock = isRelease ? `
-    signingConfigs {
-        release {
-            storeFile file('keystore.jks')
-            storePassword '${storePass||'android123'}'
-            keyAlias '${keyAlias||'mykey'}'
-            keyPassword '${keyPass||'android123'}'
-        }
-    }` : '';
-  const gradleReleaseSign = isRelease ? `\n            signingConfig signingConfigs.release` : '';
+  const gradleSigningBlock=isRelease?`\n    signingConfigs {\n        release {\n            storeFile file('keystore.jks')\n            storePassword '${storePass||'android123'}'\n            keyAlias '${keyAlias||'mykey'}'\n            keyPassword '${keyPass||'android123'}'\n        }\n    }`:'';
+  const gradleReleaseSign=isRelease?`\n            signingConfig signingConfigs.release`:'';
 
   t('app/build.gradle',
 `plugins {
@@ -2044,39 +1920,12 @@ android {
 }
 dependencies {}`);
 
-  // Root build.gradle
-  t('build.gradle',
-`buildscript {
-    repositories {
-        google()
-        mavenCentral()
-    }
-    dependencies {
-        classpath 'com.android.tools.build:gradle:8.3.2'
-    }
-}
-allprojects {
-    repositories {
-        google()
-        mavenCentral()
-    }
-}`);
+  t('build.gradle',`buildscript {\n    repositories {\n        google()\n        mavenCentral()\n    }\n    dependencies {\n        classpath 'com.android.tools.build:gradle:8.3.2'\n    }\n}\nallprojects {\n    repositories {\n        google()\n        mavenCentral()\n    }\n}`);
+  t('settings.gradle',`rootProject.name = '${appName}'\ninclude ':app'`);
+  t('app/proguard-rules.pro','# ProGuard');
+  t('gradle/wrapper/gradle-wrapper.properties',`distributionBase=GRADLE_USER_HOME\ndistributionPath=wrapper/dists\ndistributionUrl=https\\://services.gradle.org/distributions/gradle-8.7-bin.zip\nzipStoreBase=GRADLE_USER_HOME\nzipStorePath=wrapper/dists`);
 
-  t('settings.gradle', `rootProject.name = '${appName}'\ninclude ':app'`);
-  t('app/proguard-rules.pro', '# ProGuard');
-
-  // Gradle wrapper — 8.7
-  t('gradle/wrapper/gradle-wrapper.properties',
-`distributionBase=GRADLE_USER_HOME
-distributionPath=wrapper/dists
-distributionUrl=https\\://services.gradle.org/distributions/gradle-8.7-bin.zip
-zipStoreBase=GRADLE_USER_HOME
-zipStorePath=wrapper/dists`);
-
-  // GitHub Actions workflow
-  const keystoreCmd = isRelease
-    ? `      - name: Keystore\n        run: keytool -genkeypair -noprompt -keystore app/keystore.jks -alias '${keyAlias||'mykey'}' -keyalg RSA -keysize 2048 -validity 10000 -storepass '${storePass||'android123'}' -keypass '${keyPass||'android123'}' -dname 'CN=Dev,O=Dev,C=US'\n`
-    : '';
+  const keystoreCmd=isRelease?`      - name: Keystore\n        run: keytool -genkeypair -noprompt -keystore app/keystore.jks -alias '${keyAlias||'mykey'}' -keyalg RSA -keysize 2048 -validity 10000 -storepass '${storePass||'android123'}' -keypass '${keyPass||'android123'}' -dname 'CN=Dev,O=Dev,C=US'\n`:'';
 
   t('.github/workflows/build.yml',
 `name: Build APK
@@ -2105,7 +1954,7 @@ ${keystoreCmd}      - name: Build
           name: apk
           path: app/build/outputs/apk/${isRelease?'release':'debug'}/*.apk`);
 
-  t('.gitignore', `*.iml\n.gradle\n/local.properties\n/.idea\n.DS_Store\n/build\napp/build`);
+  t('.gitignore',`*.iml\n.gradle\n/local.properties\n/.idea\n.DS_Store\n/build\napp/build`);
   return files;
 }
 
@@ -2139,27 +1988,14 @@ function applyAppSettings(s){
   if(s.keyAlias !==undefined) document.getElementById('keyAlias').value  = s.keyAlias;
   if(s.storePass!==undefined) document.getElementById('storePass').value = s.storePass;
   if(s.keyPass  !==undefined) document.getElementById('keyPass').value   = s.keyPass;
-  if(s.orient){
-    document.querySelectorAll('#orientPills .pill').forEach(p=>{
-      p.classList.toggle('active', p.dataset.val===s.orient);
-    });
-  }
-  if(s.display){
-    document.querySelectorAll('#displayPills .pill').forEach(p=>{
-      p.classList.toggle('active', p.dataset.val===s.display);
-    });
-  }
-  if(s.perms){
-    document.querySelectorAll('.perm-cb').forEach(cb=>{
-      cb.checked = s.perms.includes(cb.value);
-    });
-  }
-  // Icon
-  const ic = s.iconB64 || (activeProjectId ? localStorage.getItem('apkb_icon_'+activeProjectId) : null);
+  if(s.orient){document.querySelectorAll('#orientPills .pill').forEach(p=>{p.classList.toggle('active',p.dataset.val===s.orient);});}
+  if(s.display){document.querySelectorAll('#displayPills .pill').forEach(p=>{p.classList.toggle('active',p.dataset.val===s.display);});}
+  if(s.perms){document.querySelectorAll('.perm-cb').forEach(cb=>{cb.checked=s.perms.includes(cb.value);});}
+  const ic=s.iconB64||(activeProjectId?localStorage.getItem('apkb_icon_'+activeProjectId):null);
   if(ic){
     iconB64=ic;
     document.getElementById('iconPrev').innerHTML=`<img src="data:image/png;base64,${ic}" style="width:100%;height:100%;object-fit:cover">`;
-  } else {
+  }else{
     iconB64=null;
     document.getElementById('iconPrev').innerHTML=`<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#4a5e70" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M3 9h18M9 21V9"/></svg>`;
   }
@@ -2168,16 +2004,14 @@ function applyAppSettings(s){
 function persistProjects(){
   try{
     const slim=projects.map(p=>({...p}));
-    // Store icons separately (large data)
-    slim.forEach(p=>{ if(p.settings){const ic=p.settings.iconB64;p.settings={...p.settings,iconB64:undefined};if(ic)localStorage.setItem('apkb_icon_'+p.id,ic);else localStorage.removeItem('apkb_icon_'+p.id);}});
-    localStorage.setItem('apkb_projects', JSON.stringify(slim));
-    localStorage.setItem('apkb_active', activeProjectId);
+    slim.forEach(p=>{if(p.settings){const ic=p.settings.iconB64;p.settings={...p.settings,iconB64:undefined};if(ic)localStorage.setItem('apkb_icon_'+p.id,ic);else localStorage.removeItem('apkb_icon_'+p.id);}});
+    localStorage.setItem('apkb_projects',JSON.stringify(slim));
+    localStorage.setItem('apkb_active',activeProjectId);
   }catch(e){
-    // quota exceeded — try without VFS binary files
     try{
       const slim=projects.map(p=>({...p,vfs:(p.vfs||[]).map(f=>f.binary?{...f,content:''}:f),settings:{...p.settings,iconB64:undefined}}));
-      localStorage.setItem('apkb_projects', JSON.stringify(slim));
-      localStorage.setItem('apkb_active', activeProjectId);
+      localStorage.setItem('apkb_projects',JSON.stringify(slim));
+      localStorage.setItem('apkb_active',activeProjectId);
       console.warn('persisted without binaries due to quota');
     }catch(e2){console.warn('persist failed',e2);}
   }
@@ -2189,7 +2023,7 @@ function loadProjects(){
     const active=localStorage.getItem('apkb_active');
     if(raw){
       projects=JSON.parse(raw);
-      if(active&&projects.find(p=>p.id===active)) activeProjectId=active;
+      if(active&&projects.find(p=>p.id===active))activeProjectId=active;
       else activeProjectId=projects[0]?.id||'p1';
       return true;
     }
@@ -2230,7 +2064,7 @@ function saveProjectState(){
 }
 
 function switchProject(id){
-  if(id!==activeProjectId) saveProjectState();
+  if(id!==activeProjectId)saveProjectState();
   activeProjectId=id;
   const proj=getActiveProject();if(!proj)return;
   vfs=JSON.parse(JSON.stringify(proj.vfs||[{path:'index.html',content:DEMO,binary:false}]));
@@ -2321,7 +2155,7 @@ function renderProjects(){
 function setupAutoSave(){
   ['appName','pkgName','verName','verCode','keyAlias','storePass','keyPass'].forEach(id=>{
     const el=document.getElementById(id);
-    if(el) el.addEventListener('input',()=>{const proj=getActiveProject();if(!proj)return;if(!proj.settings)proj.settings={};proj.settings[id]=el.value;persistProjects();});
+    if(el)el.addEventListener('input',()=>{const proj=getActiveProject();if(!proj)return;if(!proj.settings)proj.settings={};proj.settings[id]=el.value;persistProjects();});
   });
   document.getElementById('minSdk').addEventListener('change',()=>{const proj=getActiveProject();if(!proj)return;if(!proj.settings)proj.settings={};proj.settings.minSdk=document.getElementById('minSdk').value;persistProjects();});
   document.querySelectorAll('#orientPills .pill, #displayPills .pill').forEach(p=>{
@@ -2334,6 +2168,13 @@ function setupAutoSave(){
   });
   document.querySelectorAll('.perm-cb').forEach(cb=>{
     cb.addEventListener('change',()=>{const proj=getActiveProject();if(!proj)return;if(!proj.settings)proj.settings={};proj.settings.perms=[...document.querySelectorAll('.perm-cb:checked')].map(c=>c.value);persistProjects();});
+  });
+  // ── FIX 3: сохраняем репозиторий при изменении ──
+  document.getElementById('ghRepo').addEventListener('input',function(){
+    localStorage.setItem('apkb_repo',this.value);
+    sessionStorage.setItem('gh_repo',this.value);
+    const proj=getActiveProject();
+    if(proj){if(!proj.settings)proj.settings={};proj.settings.ghRepo=this.value;persistProjects();}
   });
 }
 

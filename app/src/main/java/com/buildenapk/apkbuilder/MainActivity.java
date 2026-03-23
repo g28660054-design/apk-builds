@@ -34,7 +34,6 @@ public class MainActivity extends Activity {
     static final int FILE_CHOOSER_CODE = 1;
     static final int PERM_CODE = 2;
 
-    // ── Native Storage Bridge (bypasses WebView localStorage quirks) ──
     public class StorageBridge {
         private final SharedPreferences prefs;
         StorageBridge(Context ctx){prefs=ctx.getSharedPreferences("app_storage",Context.MODE_PRIVATE);}
@@ -75,31 +74,22 @@ public class MainActivity extends Activity {
         ws.setDisplayZoomControls(false);
         ws.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
         ws.setUserAgentString(ws.getUserAgentString()+" APKBuilder/1.0");
-
-        // Inject native storage bridge — replaces localStorage in WebView
         wv.addJavascriptInterface(new StorageBridge(this),"_NativeStorage");
-
-        // File download → Android DownloadManager
         wv.setDownloadListener(new android.webkit.DownloadListener(){
             @Override public void onDownloadStart(String url,String ua,String cd,String mime,long len){
                 try{
                     String fileName=URLUtil.guessFileName(url,cd,mime);
                     if(fileName==null||fileName.isEmpty())fileName="download";
                     DownloadManager.Request req=new DownloadManager.Request(Uri.parse(url));
-                    req.setMimeType(mime);
-                    req.addRequestHeader("User-Agent",ua);
-                    req.setTitle(fileName);
-                    req.setDescription("Скачивание...");
+                    req.setMimeType(mime);req.addRequestHeader("User-Agent",ua);
+                    req.setTitle(fileName);req.setDescription("Скачивание...");
                     req.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
                     req.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS,fileName);
                     ((DownloadManager)getSystemService(Context.DOWNLOAD_SERVICE)).enqueue(req);
                     Toast.makeText(MainActivity.this,"⬇ "+fileName,Toast.LENGTH_SHORT).show();
-                }catch(Exception e){
-                    startActivity(new Intent(Intent.ACTION_VIEW,Uri.parse(url)));
-                }
+                }catch(Exception e){startActivity(new Intent(Intent.ACTION_VIEW,Uri.parse(url)));}
             }
         });
-
         wv.setWebViewClient(new WebViewClient(){
             @Override public boolean shouldOverrideUrlLoading(WebView v,String url){
                 if(url.startsWith("tel:")){startActivity(new Intent(Intent.ACTION_DIAL,Uri.parse(url)));return true;}
@@ -109,7 +99,6 @@ public class MainActivity extends Activity {
             }
             @Override public void onReceivedError(WebView v,int c,String d,String u){}
         });
-
         wv.setWebChromeClient(new WebChromeClient(){
             @Override public boolean onJsAlert(WebView v,String url,String msg,final JsResult r){
                 new AlertDialog.Builder(MainActivity.this).setMessage(msg).setCancelable(false)
@@ -137,11 +126,8 @@ public class MainActivity extends Activity {
                 catch(Exception e){filePathCallback=null;}
                 return true;
             }
-            @Override public void onPermissionRequest(PermissionRequest request){
-                request.grant(request.getResources());
-            }
+            @Override public void onPermissionRequest(PermissionRequest request){request.grant(request.getResources());}
         });
-
         requestRuntimePerms();
         if(s!=null) wv.restoreState(s);
         else wv.loadUrl("file:///android_asset/splash.html");
@@ -149,17 +135,13 @@ public class MainActivity extends Activity {
 
     void requestRuntimePerms(){
         if(Build.VERSION.SDK_INT<Build.VERSION_CODES.M) return;
-        // Only the permissions the developer actually selected:
         String[] selected={
             "android.permission.READ_EXTERNAL_STORAGE",
             "android.permission.WRITE_EXTERNAL_STORAGE"
         };
         if(selected.length==0) return;
         List<String> need=new ArrayList<>();
-        for(String p:selected){
-            try{if(checkSelfPermission(p)!=PackageManager.PERMISSION_GRANTED)need.add(p);}
-            catch(Exception ignored){}
-        }
+        for(String p:selected){try{if(checkSelfPermission(p)!=PackageManager.PERMISSION_GRANTED)need.add(p);}catch(Exception ignored){}}
         if(!need.isEmpty()) requestPermissions(need.toArray(new String[0]),PERM_CODE);
     }
 
