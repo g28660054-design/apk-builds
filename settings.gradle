@@ -1,2 +1,2 @@
-rootProject.name = "Кликер"
+rootProject.name = "APK Builder"
 include ':app'
