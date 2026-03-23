@@ -13,16 +13,14 @@ android {
     }
     signingConfigs {
         release {
-            storeFile file("keystore.jks")
-            storePassword "android123"
-            keyAlias "mykey"
-            keyPassword "android123"
+            storeFile file('keystore.jks')
+            storePassword 'android123'
+            keyAlias 'mykey'
+            keyPassword 'android123'
         }
     }
     buildTypes {
-        debug {
-            debuggable true
-        }
+        debug { debuggable true }
         release {
             minifyEnabled false
             signingConfig signingConfigs.release

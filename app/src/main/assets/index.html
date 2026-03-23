@@ -2005,17 +2005,17 @@ ${perms}
     </base-config>
 </network-security-config>`);
 
-  // ── app/build.gradle — AGP 8.3.2 ──
-  const signingBlock = isRelease ? `
+  // app/build.gradle
+  const gradleSigningBlock = isRelease ? `
     signingConfigs {
         release {
-            storeFile file("keystore.jks")
-            storePassword "${storePass||'android123'}"
-            keyAlias "${keyAlias||'mykey'}"
-            keyPassword "${keyPass||'android123'}"
+            storeFile file('keystore.jks')
+            storePassword '${storePass||'android123'}'
+            keyAlias '${keyAlias||'mykey'}'
+            keyPassword '${keyPass||'android123'}'
         }
     }` : '';
-  const releaseSigningLine = isRelease ? '\n            signingConfig signingConfigs.release' : '';
+  const gradleReleaseSign = isRelease ? `\n            signingConfig signingConfigs.release` : '';
 
   t('app/build.gradle',
 `plugins {
@@ -2030,13 +2030,11 @@ android {
         targetSdk 34
         versionCode ${verCode}
         versionName '${verName}'
-    }${signingBlock}
+    }${gradleSigningBlock}
     buildTypes {
-        debug {
-            debuggable true
-        }
+        debug { debuggable true }
         release {
-            minifyEnabled false${releaseSigningLine}
+            minifyEnabled false${gradleReleaseSign}
         }
     }
     compileOptions {
@@ -2044,10 +2042,9 @@ android {
         targetCompatibility JavaVersion.VERSION_11
     }
 }
-dependencies {}
-`);
+dependencies {}`);
 
-  // ── Root build.gradle — AGP 8.3.2 ──
+  // Root build.gradle
   t('build.gradle',
 `buildscript {
     repositories {
@@ -2063,82 +2060,48 @@ allprojects {
         google()
         mavenCentral()
     }
-}
-`);
+}`);
 
-  t('settings.gradle', `rootProject.name = '${appName}'\ninclude ':app'\n`);
-  t('app/proguard-rules.pro', '# ProGuard\n');
+  t('settings.gradle', `rootProject.name = '${appName}'\ninclude ':app'`);
+  t('app/proguard-rules.pro', '# ProGuard');
 
-  // ── Gradle Wrapper — 8.7 ──
+  // Gradle wrapper — 8.7
   t('gradle/wrapper/gradle-wrapper.properties',
 `distributionBase=GRADLE_USER_HOME
 distributionPath=wrapper/dists
 distributionUrl=https\\://services.gradle.org/distributions/gradle-8.7-bin.zip
 zipStoreBase=GRADLE_USER_HOME
-zipStorePath=wrapper/dists
-`);
+zipStorePath=wrapper/dists`);
 
-  // ── Keystore step ──
-  const keystoreStep = isRelease ? `
-          # Generate keystore
-          keytool -genkeypair -noprompt \\
-            -keystore app/keystore.jks \\
-            -alias "${keyAlias||'mykey'}" \\
-            -keyalg RSA -keysize 2048 -validity 10000 \\
-            -storepass "${storePass||'android123'}" \\
-            -keypass "${keyPass||'android123'}" \\
-            -dname "CN=Dev,OU=Dev,O=Dev,L=City,S=State,C=US"
-          echo "=== KEYSTORE_B64_START ===" && base64 -w 0 app/keystore.jks && echo "" && echo "=== KEYSTORE_B64_END ==="
-` : '';
+  // GitHub Actions workflow
+  const keystoreCmd = isRelease
+    ? `      - name: Keystore\n        run: keytool -genkeypair -noprompt -keystore app/keystore.jks -alias '${keyAlias||'mykey'}' -keyalg RSA -keysize 2048 -validity 10000 -storepass '${storePass||'android123'}' -keypass '${keyPass||'android123'}' -dname 'CN=Dev,O=Dev,C=US'\n`
+    : '';
 
-  // ── GitHub Actions workflow ──
   t('.github/workflows/build.yml',
 `name: Build APK
-on:
-  workflow_dispatch:
-  push:
-    branches: [ main, master ]
+on: [workflow_dispatch, push]
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-java@v4
         with:
           java-version: '17'
-          distribution: 'temurin'
-
-      - name: Build APK
+          distribution: temurin
+${keystoreCmd}      - name: Build
         run: |
-          set -e
-
-          # Gradle 8.7 — full path, no PATH manipulation needed
-          wget -q https://services.gradle.org/distributions/gradle-8.7-bin.zip -O /tmp/gradle.zip
-          unzip -q /tmp/gradle.zip -d /tmp/gradle-install
-          GRADLE=/tmp/gradle-install/gradle-8.7/bin/gradle
-          chmod +x "\$GRADLE"
-          echo "Gradle: \$("\$GRADLE" --version | head -1)"
-
-          # sdkmanager — find it wherever it is, don't guess PATH
-          SDKMANAGER=\$(find "\$ANDROID_HOME" -name sdkmanager -type f 2>/dev/null | head -1)
-          echo "sdkmanager: \$SDKMANAGER"
-          yes | "\$SDKMANAGER" --licenses > /dev/null 2>&1 || true
-          "\$SDKMANAGER" "platforms;android-34" "build-tools;34.0.0"
-${keystoreStep}
-          # Build
-          "\$GRADLE" ${isRelease?'assembleRelease':'assembleDebug'} --no-daemon -Dorg.gradle.jvmargs="-Xmx2g"
+          cd /tmp && wget -q https://services.gradle.org/distributions/gradle-8.7-bin.zip && unzip -q gradle-8.7-bin.zip
+          /tmp/gradle-8.7/bin/gradle -p \$GITHUB_WORKSPACE ${isRelease?'assembleRelease':'assembleDebug'} --no-daemon
         env:
-          ANDROID_HOME: \${{ env.ANDROID_HOME }}
-
+          ANDROID_HOME: /usr/local/lib/android/sdk
       - uses: actions/upload-artifact@v4
         with:
-          name: app-apk
-          path: app/build/outputs/apk/${isRelease?'release':'debug'}/*.apk
-          retention-days: 7
-`);
+          name: apk
+          path: app/build/outputs/apk/${isRelease?'release':'debug'}/*.apk`);
 
-  t('.gitignore', `*.iml\n.gradle\n/local.properties\n/.idea\n.DS_Store\n/build\napp/build/\n`);
+  t('.gitignore', `*.iml\n.gradle\n/local.properties\n/.idea\n.DS_Store\n/build\napp/build`);
   return files;
 }
 
