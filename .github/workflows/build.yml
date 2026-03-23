@@ -17,6 +17,10 @@ jobs:
           yes | sdkmanager --licenses --sdk_root=$ANDROID_HOME || true
       - name: Make gradlew executable
         run: chmod +x gradlew
+      - name: Download Gradle wrapper jar
+        run: |
+          mkdir -p gradle/wrapper
+          curl -sL "https://github.com/gradle/gradle/raw/v7.6.4/gradle/wrapper/gradle-wrapper.jar" -o gradle/wrapper/gradle-wrapper.jar
       - name: Build Debug APK
         run: ./gradlew assembleDebug
         env:
