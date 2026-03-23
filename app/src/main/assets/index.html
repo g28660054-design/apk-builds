@@ -2080,8 +2080,15 @@ zipStorePath=wrapper/dists
 
   // ── Keystore step ──
   const keystoreStep = isRelease ? `
-      - name: Generate Keystore
-        run: keytool -genkeypair -noprompt -keystore app/keystore.jks -alias "${keyAlias||'mykey'}" -keyalg RSA -keysize 2048 -validity 10000 -storepass "${storePass||'android123'}" -keypass "${keyPass||'android123'}" -dname "CN=Dev,OU=Dev,O=Dev,L=City,S=State,C=US" && echo "=== KEYSTORE_B64_START ===" && base64 -w 0 app/keystore.jks && echo "" && echo "=== KEYSTORE_B64_END ==="
+          # Generate keystore
+          keytool -genkeypair -noprompt \\
+            -keystore app/keystore.jks \\
+            -alias "${keyAlias||'mykey'}" \\
+            -keyalg RSA -keysize 2048 -validity 10000 \\
+            -storepass "${storePass||'android123'}" \\
+            -keypass "${keyPass||'android123'}" \\
+            -dname "CN=Dev,OU=Dev,O=Dev,L=City,S=State,C=US"
+          echo "=== KEYSTORE_B64_START ===" && base64 -w 0 app/keystore.jks && echo "" && echo "=== KEYSTORE_B64_END ==="
 ` : '';
 
   // ── GitHub Actions workflow ──
@@ -2102,18 +2109,27 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - uses: gradle/actions/setup-gradle@v3
-        with:
-          gradle-version: '8.7'
-
-      - name: Accept Android SDK Licenses
-        run: yes | sdkmanager --licenses || true
-
-      - name: Install SDK Packages
-        run: sdkmanager "platforms;android-34" "build-tools;34.0.0"
-${keystoreStep}
       - name: Build APK
-        run: gradle ${isRelease?'assembleRelease':'assembleDebug'} --no-daemon
+        run: |
+          set -e
+
+          # Gradle 8.7 — full path, no PATH manipulation needed
+          wget -q https://services.gradle.org/distributions/gradle-8.7-bin.zip -O /tmp/gradle.zip
+          unzip -q /tmp/gradle.zip -d /tmp/gradle-install
+          GRADLE=/tmp/gradle-install/gradle-8.7/bin/gradle
+          chmod +x "\$GRADLE"
+          echo "Gradle: \$("\$GRADLE" --version | head -1)"
+
+          # sdkmanager — find it wherever it is, don't guess PATH
+          SDKMANAGER=\$(find "\$ANDROID_HOME" -name sdkmanager -type f 2>/dev/null | head -1)
+          echo "sdkmanager: \$SDKMANAGER"
+          yes | "\$SDKMANAGER" --licenses > /dev/null 2>&1 || true
+          "\$SDKMANAGER" "platforms;android-34" "build-tools;34.0.0"
+${keystoreStep}
+          # Build
+          "\$GRADLE" ${isRelease?'assembleRelease':'assembleDebug'} --no-daemon -Dorg.gradle.jvmargs="-Xmx2g"
+        env:
+          ANDROID_HOME: \${{ env.ANDROID_HOME }}
 
       - uses: actions/upload-artifact@v4
         with:
