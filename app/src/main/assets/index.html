@@ -2030,15 +2030,17 @@ dependencies {}
   t('app/proguard-rules.pro','# ProGuard\n');
   t('gradle/wrapper/gradle-wrapper.properties',`distributionBase=GRADLE_USER_HOME\ndistributionPath=wrapper/dists\ndistributionUrl=https\\://services.gradle.org/distributions/gradle-7.6.4-bin.zip\nzipStoreBase=GRADLE_USER_HOME\nzipStorePath=wrapper/dists\n`);
 
-  const wfKeystoreStep = isRelease ? `      - name: Generate Keystore
-        run: |
-          keytool -genkeypair -noprompt -keystore app/keystore.jks -alias "${keyAlias||'mykey'}" -keyalg RSA -keysize 2048 -validity 10000 -storepass "${storePass||'android123'}" -keypass "${keyPass||'android123'}" -dname "CN=APKBuilder,OU=Dev,O=APKBuilder,L=City,S=State,C=US"
-          echo "Keystore created: $(ls -la app/keystore.jks)"
-          echo "--- KEYSTORE BASE64 (save for future release builds) ---"
-          base64 -w 0 app/keystore.jks
-          echo ""
-          echo "--- END ---"
+  const wfKeystoreStep = isRelease ? `
+      - name: Generate Keystore
+        run: keytool -genkeypair -noprompt -keystore app/keystore.jks -alias "${keyAlias||'mykey'}" -keyalg RSA -keysize 2048 -validity 10000 -storepass "${storePass||'android123'}" -keypass "${keyPass||'android123'}" -dname "CN=APKBuilder,OU=Dev,O=APKBuilder,L=City,S=State,C=US" && echo "--- KEYSTORE BASE64 ---" && base64 -w 0 app/keystore.jks && echo "" && echo "--- END ---"
 ` : '';
+
+  // Generate gradlew wrapper script so we don't depend on PATH tricks
+  t('gradlew',
+`#!/usr/bin/env sh
+GRADLE_OPTS=""
+exec /opt/gradle/gradle-7.6.4/bin/gradle "$@"
+`);
 
   t('.github/workflows/build.yml',
 `name: Build APK
@@ -2046,9 +2048,6 @@ on:
   workflow_dispatch:
   push:
     branches: [ main, master ]
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-  ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -2060,22 +2059,26 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Setup Android SDK
-        run: |
-          echo "ANDROID_HOME=$ANDROID_HOME" >> $GITHUB_ENV
-          echo "$ANDROID_HOME/cmdline-tools/latest/bin" >> $GITHUB_PATH
-          echo "$ANDROID_HOME/platform-tools" >> $GITHUB_PATH
-          sdkmanager --sdk_root=$ANDROID_HOME "platforms;android-33" "build-tools;33.0.2"
-          yes | sdkmanager --sdk_root=$ANDROID_HOME --licenses || true
-
-      - name: Install Gradle
+      - name: Install Gradle 7.6.4
         run: |
           wget -q https://services.gradle.org/distributions/gradle-7.6.4-bin.zip -O /tmp/gradle.zip
           unzip -q /tmp/gradle.zip -d /opt/gradle
           echo "/opt/gradle/gradle-7.6.4/bin" >> \$GITHUB_PATH
+          chmod +x /opt/gradle/gradle-7.6.4/bin/gradle
 
-${wfKeystoreStep}      - name: Build APK
-        run: gradle ${isRelease?'assembleRelease':'assembleDebug'}
+      - name: Setup Android SDK
+        run: |
+          CMDLINE_TOOLS=\$ANDROID_HOME/cmdline-tools/latest/bin
+          echo "\$CMDLINE_TOOLS" >> \$GITHUB_PATH
+          echo "\$ANDROID_HOME/platform-tools" >> \$GITHUB_PATH
+          export PATH="\$CMDLINE_TOOLS:\$PATH"
+          sdkmanager "platforms;android-33" "build-tools;33.0.2"
+          yes | sdkmanager --licenses || true
+        env:
+          ANDROID_HOME: \${{ env.ANDROID_HOME }}
+${wfKeystoreStep}
+      - name: Build APK
+        run: /opt/gradle/gradle-7.6.4/bin/gradle ${isRelease?'assembleRelease':'assembleDebug'} --no-daemon --stacktrace
         env:
           ANDROID_HOME: \${{ env.ANDROID_HOME }}
 
