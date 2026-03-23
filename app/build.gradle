@@ -3,7 +3,7 @@ android {
     compileSdkVersion 33
     buildToolsVersion "33.0.2"
     defaultConfig {
-        applicationId "com.exaejrmple.myappj3ir"
+        applicationId "com.emple.mya"
         minSdkVersion 23
         targetSdkVersion 33
         versionCode 1
@@ -11,18 +11,6 @@ android {
     }
     buildTypes {
         debug { debuggable true }
-        release {
-            minifyEnabled false
-            signingConfig signingConfigs.release
-        }
-    }
-    signingConfigs {
-        release {
-            storeFile file("keystore.jks")
-            storePassword System.getenv("STORE_PASS") ?: "buildpass"
-            keyAlias System.getenv("KEY_ALIAS") ?: "appkey"
-            keyPassword System.getenv("KEY_PASS") ?: "buildpass"
-        }
     }
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8

@@ -1,4 +1,2 @@
-@rem Gradle wrapper startup script for Windows
 @echo off
-set CLASSPATH=%APP_HOME%\gradle\wrapper\gradle-wrapper.jar
-java -cp "%CLASSPATH%" org.gradle.wrapper.GradleWrapperMain %*
+java -classpath "%~dp0gradle\wrapper\gradle-wrapper.jar" org.gradle.wrapper.GradleWrapperMain %*
