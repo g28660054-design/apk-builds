@@ -1,2 +1,2 @@
-rootProject.name = "Js learn"
+rootProject.name = "MyApp"
 include ':app'
