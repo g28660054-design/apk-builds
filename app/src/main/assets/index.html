@@ -1957,17 +1957,20 @@ ${runtimePermsList}
 
   t('app/src/main/AndroidManifest.xml',
 `<?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="${pkg}" android:versionCode="${verCode}" android:versionName="${verName}">
-    <uses-sdk android:minSdkVersion="${minSdk}" android:targetSdkVersion="33"/>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
 ${perms}
-    <application android:label="${appName}" android:icon="@mipmap/ic_launcher"
-        android:allowBackup="true" android:hardwareAccelerated="true"
+    <application
+        android:label="@string/app_name"
+        android:icon="@mipmap/ic_launcher"
+        android:allowBackup="true"
+        android:hardwareAccelerated="true"
         android:usesCleartextTraffic="true"
         android:networkSecurityConfig="@xml/network_security_config">
-        <activity android:name=".MainActivity" android:exported="true"
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
             android:screenOrientation="${orient}"
             android:configChanges="orientation|screenSize|keyboardHidden">
             <intent-filter>
@@ -1979,28 +1982,31 @@ ${perms}
 </manifest>`);
 
   for(const dpi of['ldpi','mdpi','hdpi','xhdpi','xxhdpi','xxxhdpi']){if(icons[dpi])b(`app/src/main/res/mipmap-${dpi}/ic_launcher.png`,icons[dpi]);}
-  t('app/src/main/res/values/strings.xml',`<?xml version="1.0" encoding="utf-8"?><resources><string name="app_name">${appName}</string></resources>`);
-  t('app/src/main/res/values/styles.xml',`<?xml version="1.0" encoding="utf-8"?><resources><style name="AppTheme" parent="android:Theme.Material.NoActionBar"><item name="android:windowBackground">@android:color/black</item></style></resources>`);
+  t('app/src/main/res/values/strings.xml',
+`<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">${appName}</string>
+</resources>`);
+  t('app/src/main/res/values/themes.xml',
+`<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="AppTheme" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@android:color/black</item>
+    </style>
+</resources>`);
   t('app/src/main/res/xml/network_security_config.xml',
 `<?xml version="1.0" encoding="utf-8"?>
 <network-security-config>
     <base-config cleartextTrafficPermitted="true">
-        <trust-anchors><certificates src="system"/><certificates src="user"/></trust-anchors>
+        <trust-anchors>
+            <certificates src="system"/>
+            <certificates src="user"/>
+        </trust-anchors>
     </base-config>
 </network-security-config>`);
-  t('app/build.gradle',
-isRelease ?
-`plugins { id 'com.android.application' }
-android {
-    compileSdkVersion 33
-    buildToolsVersion "33.0.2"
-    defaultConfig {
-        applicationId "${pkg}"
-        minSdkVersion ${minSdk}
-        targetSdkVersion 33
-        versionCode ${verCode}
-        versionName "${verName}"
-    }
+
+  // ── app/build.gradle — AGP 8.3.2 ──
+  const signingBlock = isRelease ? `
     signingConfigs {
         release {
             storeFile file("keystore.jks")
@@ -2008,71 +2014,77 @@ android {
             keyAlias "${keyAlias||'mykey'}"
             keyPassword "${keyPass||'android123'}"
         }
-    }
+    }` : '';
+  const releaseSigningLine = isRelease ? '\n            signingConfig signingConfigs.release' : '';
+
+  t('app/build.gradle',
+`plugins {
+    id 'com.android.application'
+}
+android {
+    namespace '${pkg}'
+    compileSdk 34
+    defaultConfig {
+        applicationId '${pkg}'
+        minSdk ${minSdk}
+        targetSdk 34
+        versionCode ${verCode}
+        versionName '${verName}'
+    }${signingBlock}
     buildTypes {
-        debug { debuggable true }
+        debug {
+            debuggable true
+        }
         release {
-            minifyEnabled false
-            signingConfig signingConfigs.release
+            minifyEnabled false${releaseSigningLine}
         }
     }
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
-    }
-}
-dependencies {}
-`
-:
-`plugins { id 'com.android.application' }
-android {
-    compileSdkVersion 33
-    buildToolsVersion "33.0.2"
-    defaultConfig {
-        applicationId "${pkg}"
-        minSdkVersion ${minSdk}
-        targetSdkVersion 33
-        versionCode ${verCode}
-        versionName "${verName}"
-    }
-    buildTypes {
-        debug { debuggable true }
-        release { minifyEnabled false }
-    }
-    compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
+        sourceCompatibility JavaVersion.VERSION_11
+        targetCompatibility JavaVersion.VERSION_11
     }
 }
 dependencies {}
 `);
-  t('build.gradle',`buildscript {\n    repositories { google(); mavenCentral() }\n    dependencies { classpath 'com.android.tools.build:gradle:7.4.2' }\n}\nallprojects {\n    repositories { google(); mavenCentral() }\n}\n`);
-  t('settings.gradle',`rootProject.name = "${appName}"\ninclude ':app'\n`);
-  t('app/proguard-rules.pro','# ProGuard\n');
+
+  // ── Root build.gradle — AGP 8.3.2 ──
+  t('build.gradle',
+`buildscript {
+    repositories {
+        google()
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:8.3.2'
+    }
+}
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
+`);
+
+  t('settings.gradle', `rootProject.name = '${appName}'\ninclude ':app'\n`);
+  t('app/proguard-rules.pro', '# ProGuard\n');
+
+  // ── Gradle Wrapper — 8.7 ──
   t('gradle/wrapper/gradle-wrapper.properties',
 `distributionBase=GRADLE_USER_HOME
 distributionPath=wrapper/dists
-distributionUrl=https\\://services.gradle.org/distributions/gradle-7.6.4-bin.zip
+distributionUrl=https\\://services.gradle.org/distributions/gradle-8.7-bin.zip
 zipStoreBase=GRADLE_USER_HOME
 zipStorePath=wrapper/dists
 `);
 
-  // Keystore block — inline in the big build step
-  const keystoreBlock = isRelease ? `
-          # ── Generate keystore ──
-          keytool -genkeypair -noprompt \\
-            -keystore app/keystore.jks \\
-            -alias "${keyAlias||'mykey'}" \\
-            -keyalg RSA -keysize 2048 -validity 10000 \\
-            -storepass "${storePass||'android123'}" \\
-            -keypass "${keyPass||'android123'}" \\
-            -dname "CN=Dev,OU=Dev,O=Dev,L=City,S=State,C=US"
-          echo "=== KEYSTORE B64 START ==="
-          base64 -w 0 app/keystore.jks
-          echo ""
-          echo "=== KEYSTORE B64 END ==="
+  // ── Keystore step ──
+  const keystoreStep = isRelease ? `
+      - name: Generate Keystore
+        run: keytool -genkeypair -noprompt -keystore app/keystore.jks -alias "${keyAlias||'mykey'}" -keyalg RSA -keysize 2048 -validity 10000 -storepass "${storePass||'android123'}" -keypass "${keyPass||'android123'}" -dname "CN=Dev,OU=Dev,O=Dev,L=City,S=State,C=US" && echo "=== KEYSTORE_B64_START ===" && base64 -w 0 app/keystore.jks && echo "" && echo "=== KEYSTORE_B64_END ==="
 ` : '';
 
+  // ── GitHub Actions workflow ──
   t('.github/workflows/build.yml',
 `name: Build APK
 on:
@@ -2090,26 +2102,18 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Build
-        run: |
-          set -e
+      - uses: gradle/actions/setup-gradle@v3
+        with:
+          gradle-version: '8.7'
 
-          # ── Install Gradle ──
-          wget -q https://services.gradle.org/distributions/gradle-7.6.4-bin.zip -O /tmp/g.zip
-          unzip -q /tmp/g.zip -d /opt/gradle
-          GRADLE=/opt/gradle/gradle-7.6.4/bin/gradle
-          chmod +x \$GRADLE
+      - name: Accept Android SDK Licenses
+        run: yes | sdkmanager --licenses || true
 
-          # ── Android SDK ──
-          SDKMANAGER=\$(find "\$ANDROID_HOME" -name sdkmanager 2>/dev/null | head -1)
-          echo "sdkmanager: \$SDKMANAGER"
-          yes | "\$SDKMANAGER" --licenses > /dev/null 2>&1 || true
-          "\$SDKMANAGER" "platforms;android-33" "build-tools;33.0.2"
-${keystoreBlock}
-          # ── Compile ──
-          \$GRADLE ${isRelease?'assembleRelease':'assembleDebug'} --no-daemon --stacktrace
-        env:
-          ANDROID_HOME: \${{ env.ANDROID_HOME }}
+      - name: Install SDK Packages
+        run: sdkmanager "platforms;android-34" "build-tools;34.0.0"
+${keystoreStep}
+      - name: Build APK
+        run: gradle ${isRelease?'assembleRelease':'assembleDebug'} --no-daemon
 
       - uses: actions/upload-artifact@v4
         with:
@@ -2117,7 +2121,8 @@ ${keystoreBlock}
           path: app/build/outputs/apk/${isRelease?'release':'debug'}/*.apk
           retention-days: 7
 `);
-  t('.gitignore',`*.iml\n.gradle\n/local.properties\n/.idea\n.DS_Store\n/build\napp/build/\n`);
+
+  t('.gitignore', `*.iml\n.gradle\n/local.properties\n/.idea\n.DS_Store\n/build\napp/build/\n`);
   return files;
 }
 

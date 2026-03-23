@@ -14,39 +14,21 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Build
-        run: |
-          set -e
+      - uses: gradle/actions/setup-gradle@v3
+        with:
+          gradle-version: '8.7'
 
-          # ── Install Gradle ──
-          wget -q https://services.gradle.org/distributions/gradle-7.6.4-bin.zip -O /tmp/g.zip
-          unzip -q /tmp/g.zip -d /opt/gradle
-          GRADLE=/opt/gradle/gradle-7.6.4/bin/gradle
-          chmod +x $GRADLE
+      - name: Accept Android SDK Licenses
+        run: yes | sdkmanager --licenses || true
 
-          # ── Android SDK ──
-          SDKMANAGER=$(find "$ANDROID_HOME" -name sdkmanager 2>/dev/null | head -1)
-          echo "sdkmanager: $SDKMANAGER"
-          yes | "$SDKMANAGER" --licenses > /dev/null 2>&1 || true
-          "$SDKMANAGER" "platforms;android-33" "build-tools;33.0.2"
+      - name: Install SDK Packages
+        run: sdkmanager "platforms;android-34" "build-tools;34.0.0"
 
-          # ── Generate keystore ──
-          keytool -genkeypair -noprompt \
-            -keystore app/keystore.jks \
-            -alias "mykey" \
-            -keyalg RSA -keysize 2048 -validity 10000 \
-            -storepass "android123" \
-            -keypass "android123" \
-            -dname "CN=Dev,OU=Dev,O=Dev,L=City,S=State,C=US"
-          echo "=== KEYSTORE B64 START ==="
-          base64 -w 0 app/keystore.jks
-          echo ""
-          echo "=== KEYSTORE B64 END ==="
+      - name: Generate Keystore
+        run: keytool -genkeypair -noprompt -keystore app/keystore.jks -alias "mykey" -keyalg RSA -keysize 2048 -validity 10000 -storepass "android123" -keypass "android123" -dname "CN=Dev,OU=Dev,O=Dev,L=City,S=State,C=US" && echo "=== KEYSTORE_B64_START ===" && base64 -w 0 app/keystore.jks && echo "" && echo "=== KEYSTORE_B64_END ==="
 
-          # ── Compile ──
-          $GRADLE assembleRelease --no-daemon --stacktrace
-        env:
-          ANDROID_HOME: ${{ env.ANDROID_HOME }}
+      - name: Build APK
+        run: gradle assembleRelease --no-daemon
 
       - uses: actions/upload-artifact@v4
         with:
