@@ -1,2 +1,2 @@
-rootProject.name = 'Кликер'
+rootProject.name = "GITHUB APK Builder"
 include ':app'

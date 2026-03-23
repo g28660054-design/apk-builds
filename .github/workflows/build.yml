@@ -1,27 +1,56 @@
 name: Build APK
-on: [workflow_dispatch, push]
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main, master ]
 jobs:
   build:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
         with:
           java-version: '17'
-          distribution: temurin
-      - name: Keystore
-        run: keytool -genkeypair -noprompt -keystore app/keystore.jks -alias 'mykey' -keyalg RSA -keysize 2048 -validity 10000 -storepass 'android123' -keypass 'android123' -dname 'CN=Dev,O=Dev,C=US'
-      - name: Build
+          distribution: 'temurin'
+      - name: Install Gradle
         run: |
-          SDK=/usr/local/lib/android/sdk
-          SDKM=$SDK/cmdline-tools/latest/bin/sdkmanager
-          yes | $SDKM --licenses > /dev/null 2>&1 || true
-          $SDKM "platforms;android-34" "build-tools;34.0.0"
-          cd /tmp && wget -q https://services.gradle.org/distributions/gradle-8.7-bin.zip && unzip -q gradle-8.7-bin.zip
-          /tmp/gradle-8.7/bin/gradle -p $GITHUB_WORKSPACE assembleRelease --no-daemon
+          wget -q https://services.gradle.org/distributions/gradle-7.6.4-bin.zip -O /tmp/gradle.zip
+          unzip -q /tmp/gradle.zip -d /opt/gradle
+          echo "/opt/gradle/gradle-7.6.4/bin" >> $GITHUB_PATH
+      - uses: android-actions/setup-android@v3
+      - name: Install SDK
+        run: |
+          sdkmanager "platforms;android-33" "build-tools;33.0.2" --sdk_root=$ANDROID_HOME
+          yes | sdkmanager --licenses --sdk_root=$ANDROID_HOME || true
+      - name: Setup Keystore
+        run: |
+          if [ -n "${{ secrets.KEYSTORE_B64 }}" ]; then
+            echo "Using saved keystore from GitHub Secrets"
+            echo "${{ secrets.KEYSTORE_B64 }}" | base64 -d > app/keystore.jks
+          else
+            echo "Generating new keystore..."
+            keytool -genkeypair -v -keystore app/keystore.jks \\
+              -alias "mykey" -keyalg RSA -keysize 2048 -validity 10000 \\
+              -storepass "android123" -keypass "android123" \\
+              -dname "CN=APKBuilder, OU=Dev, O=APKBuilder, L=City, S=State, C=US"
+            KEYSTORE_B64=$(base64 -w 0 app/keystore.jks)
+            curl -s -X PUT "https://api.github.com/repos/${{ github.repository }}/actions/secrets/KEYSTORE_B64" \\
+              -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \\
+              -H "Content-Type: application/json" \\
+              -d "{\"encrypted_value\":\"${KEYSTORE_B64}\"}" || true
+            echo "Note: Save KEYSTORE_B64 value to GitHub Secrets for future builds"
+          fi
         env:
-          ANDROID_HOME: /usr/local/lib/android/sdk
+          ANDROID_HOME: ${{ env.ANDROID_HOME }}
+      - name: Build APK
+        run: gradle assembleRelease
+        env:
+          ANDROID_HOME: ${{ env.ANDROID_HOME }}
+          STORE_PASS: "android123"
+          KEY_ALIAS: "mykey"
+          KEY_PASS: "android123"
       - uses: actions/upload-artifact@v4
         with:
-          name: apk
+          name: app-apk
           path: app/build/outputs/apk/release/*.apk
+          retention-days: 7
