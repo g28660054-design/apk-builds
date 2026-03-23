@@ -2,14 +2,14 @@ plugins {
     id 'com.android.application'
 }
 android {
-    namespace 'com.buildenapk.apkbuilder'
+    namespace 'com.example.clicker'
     compileSdk 34
     defaultConfig {
-        applicationId 'com.buildenapk.apkbuilder'
+        applicationId 'com.example.clicker'
         minSdk 23
         targetSdk 34
         versionCode 1
-        versionName '1.5'
+        versionName '1.0.0'
     }
     signingConfigs {
         release {
