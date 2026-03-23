@@ -13,6 +13,10 @@ jobs:
         run: keytool -genkeypair -noprompt -keystore app/keystore.jks -alias 'mykey' -keyalg RSA -keysize 2048 -validity 10000 -storepass 'android123' -keypass 'android123' -dname 'CN=Dev,O=Dev,C=US'
       - name: Build
         run: |
+          SDK=/usr/local/lib/android/sdk
+          SDKM=$SDK/cmdline-tools/latest/bin/sdkmanager
+          yes | $SDKM --licenses > /dev/null 2>&1 || true
+          $SDKM "platforms;android-34" "build-tools;34.0.0"
           cd /tmp && wget -q https://services.gradle.org/distributions/gradle-8.7-bin.zip && unzip -q gradle-8.7-bin.zip
           /tmp/gradle-8.7/bin/gradle -p $GITHUB_WORKSPACE assembleRelease --no-daemon
         env:
